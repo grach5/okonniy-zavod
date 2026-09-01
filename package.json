@@ -11,7 +11,7 @@
     "icons": "node scripts/icons.mjs",
     "audit": "node scripts/audit.mjs",
     "check": "astro build && node scripts/audit.mjs",
-    "build:pages": "cross-env-shim",
+    "build:pages": "node scripts/build-pages.mjs",
     "deploy": "node scripts/deploy.mjs"
   },
   "dependencies": {
