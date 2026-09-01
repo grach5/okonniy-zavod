@@ -1,0 +1,211 @@
+---
+import Base from '../layouts/Base.astro';
+import SectionHead from '../components/SectionHead.astro';
+import LeadForm from '../components/LeadForm.astro';
+import PhotoSlot from '../components/PhotoSlot.astro';
+import { site, offices, cities } from '../data/site.js';
+import { url } from '../lib/url.js';
+---
+
+<Base
+  title="Контакты: офисы во Владивостоке и Артёме"
+  description="Контакты Оконного завода: адреса офисов во Владивостоке и Артёме, телефоны, часы работы, реквизиты. Производство в Артёме, ул. 2-я Рабочая, 6."
+  path="kontakty"
+  breadcrumbs={[{ name: 'Главная', href: '/' }, { name: 'Контакты' }]}
+>
+  <section class="head">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Хлебные крошки">
+        <a href={url('/')}>Главная</a><span aria-hidden="true">/</span><span aria-current="page">Контакты</span>
+      </nav>
+      <h1 class="head__h1">Контакты</h1>
+      <p class="lede head__lede">
+        Производство и основной офис — в Артёме, офис продаж — во Владивостоке.
+        Приехать на производство можно в рабочие часы, желательно позвонив заранее,
+        чтобы вас встретили.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================ ОФИСЫ ============================ -->
+  <section class="section wrap">
+    <div class="offices">
+      {offices.map((o) => (
+        <article class="office reveal">
+          <div class="office__body">
+            <p class="eyebrow">{o.role}</p>
+            <h2 class="office__city">{o.city}</h2>
+            <dl class="office__list">
+              <div><dt>Адрес</dt><dd>{o.street}</dd></div>
+              <div><dt>Телефон</dt><dd><a class="mono" href={`tel:${o.phoneHref}`}>{o.phone}</a></dd></div>
+              <div><dt>Почта</dt><dd><a href={`mailto:${site.email}`}>{site.email}</a></dd></div>
+              <div><dt>Часы работы</dt><dd>{site.hours}</dd></div>
+            </dl>
+            <div class="office__actions">
+              <a class="btn btn--sm" href={`tel:${o.phoneHref}`}>Позвонить</a>
+              <a class="btn btn--sm btn--ghost" href={site.social.whatsapp} target="_blank" rel="noopener">Написать в WhatsApp</a>
+            </div>
+          </div>
+          <PhotoSlot
+            ratio="standard"
+            note={o.isMain ? 'Фото: въезд на производство и вывеска' : 'Фото: вход в офис продаж с улицы'}
+          />
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <!-- ============================ КАРТА ============================ -->
+  <section class="section wrap">
+    <SectionHead
+      eyebrow="Как добраться"
+      title="На карте"
+      lede="Карта подключается на этапе публикации: она подгружается только по клику, чтобы не тормозить страницу. На действующем сайте API карт грузится сразу и на всех страницах, даже там, где карты нет."
+      split
+    />
+    <div class="map" data-map>
+      <button type="button" class="map__load" data-map-load>
+        <span class="map__load-title">Показать карту</span>
+        <span class="map__load-note small">Артём, ул. 2-я Рабочая, 6 · Владивосток, ул. Гамарника, 8а</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============================ ГОРОДА ============================ -->
+  <section class="section wrap">
+    <SectionHead eyebrow="География" title="Где мы работаем" split />
+    <div class="pane-grid pane-grid--4">
+      {cities.map((c) => (
+        <a class="geo" href={url(`/${c.slug}`)}>
+          <h3 class="t-h4">{c.name}</h3>
+          <p class="body-2 geo__text">{c.note}</p>
+          <span class="geo__link small">Подробнее →</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- ========================== РЕКВИЗИТЫ ========================== -->
+  <section class="section wrap">
+    <SectionHead
+      eyebrow="Для юридических лиц"
+      title="Реквизиты и документы"
+      lede="Работаем по договору с полным пакетом закрывающих документов. Отдел по работе с корпоративными клиентами существует с 2014 года."
+      split
+    />
+    <div class="req">
+      <dl class="req__list">
+        <div><dt>Наименование</dt><dd>{site.legalName}</dd></div>
+        <div><dt>ИНН</dt><dd class="mono">{site.inn || 'уточняется'}</dd></div>
+        <div><dt>ОГРН</dt><dd class="mono">{site.ogrn || 'уточняется'}</dd></div>
+        <div><dt>Юридический адрес</dt><dd>Приморский край, г. Артём, ул. 2-я Рабочая, 6</dd></div>
+        <div><dt>Почта для документов</dt><dd><a href={`mailto:${site.email}`}>{site.email}</a></dd></div>
+      </dl>
+      <p class="small req__note">
+        Полный комплект — устав, свидетельства, сертификаты на профильные системы —
+        высылаем по запросу на почту. Смотрите также страницу
+        <a href={url('/garantiya')}>«Гарантия и документы»</a>.
+      </p>
+    </div>
+  </section>
+
+  <section class="section--tight wrap">
+    <LeadForm
+      title="Написать нам"
+      lede="Оставьте номер — перезвоним в рабочие часы. Если вопрос срочный, быстрее позвонить или написать в WhatsApp."
+    />
+  </section>
+</Base>
+
+<style>
+  .head {
+    padding-block: clamp(20px, 3vw, 34px) clamp(38px, 6vw, 72px);
+    border-bottom: 1px solid var(--rule);
+    background: radial-gradient(70% 120% at 88% -10%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 64%);
+  }
+  .crumbs { display: flex; gap: 9px; font-size: 13px; color: var(--fg-3); margin-bottom: clamp(24px, 4vw, 46px); }
+  .crumbs a { color: var(--fg-3); text-decoration: none; }
+  .head__h1 { font-size: clamp(38px, 6.4vw, 78px); font-weight: 400; letter-spacing: -0.04em; }
+  .head__lede { max-width: 58ch; margin-top: 18px; }
+
+  .offices { display: grid; grid-template-columns: 1fr; gap: clamp(28px, 4vw, 48px); }
+  @media (min-width: 900px) { .offices { grid-template-columns: repeat(2, 1fr); } }
+
+  .office {
+    display: flex; flex-direction: column; gap: 22px;
+    border: 1px solid var(--rule); border-radius: 0;
+    background: var(--surface); overflow: hidden;
+  }
+  .office__body { display: flex; flex-direction: column; gap: 14px; padding: clamp(22px, 3vw, 34px) clamp(22px, 3vw, 34px) 0; }
+  .office__city { font-family: var(--font-display); font-weight: 400; font-size: clamp(26px, 3.2vw, 36px); letter-spacing: -0.03em; }
+  .office__list { margin: 0; display: flex; flex-direction: column; border-top: 1px solid var(--rule); }
+  .office__list > div {
+    display: grid; grid-template-columns: 130px 1fr; gap: 16px;
+    padding: 12px 0; border-bottom: 1px solid var(--rule);
+  }
+  .office__list dt { font-size: 13.5px; color: var(--fg-3); }
+  .office__list dd { margin: 0; font-size: 15px; font-weight: 500; }
+  .office__list a { text-decoration: none; }
+  .office__actions { display: flex; flex-wrap: wrap; gap: 10px; padding-bottom: 4px; }
+  .office :global(.photo-slot) { border: 0; border-top: 1px solid var(--rule); border-radius: 0; }
+
+  .map { border: 1px solid var(--rule); border-radius: 0; overflow: hidden; }
+  .map__load {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; aspect-ratio: 21 / 9; min-height: 260px;
+    background:
+      radial-gradient(80% 70% at 40% 30%, color-mix(in srgb, var(--accent) 11%, transparent), transparent 70%),
+      var(--surface-2);
+    border: 0; cursor: pointer; text-align: center; padding: 24px;
+    transition: background .25s;
+  }
+  .map__load:hover { background: var(--surface); }
+  .map__load-title { font-family: var(--font-display); font-weight: 400; font-size: clamp(20px, 2.4vw, 28px); letter-spacing: -0.02em; }
+
+  .geo { display: flex; flex-direction: column; gap: 9px; text-decoration: none; color: inherit; transition: background .25s; }
+  .geo:hover { background: var(--surface-2); }
+  .geo__text { flex: 1; font-size: 14.5px; }
+  .geo__link { color: var(--fg-3); font-weight: 500; }
+
+  .req { display: grid; grid-template-columns: 1fr; gap: 24px; }
+  @media (min-width: 900px) { .req { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 48px; align-items: start; } }
+  .req__list { margin: 0; border-top: 1px solid var(--rule); }
+  .req__list > div {
+    display: grid; grid-template-columns: 1fr; gap: 2px;
+    padding: 14px 2px; border-bottom: 1px solid var(--rule);
+  }
+  @media (min-width: 560px) { .req__list > div { grid-template-columns: 210px 1fr; gap: 24px; align-items: baseline; } }
+  .req__list dt { font-size: 13.5px; color: var(--fg-3); }
+  .req__list dd { margin: 0; font-size: 15px; font-weight: 500; }
+  .req__note { max-width: 44ch; line-height: 1.55; }
+</style>
+
+<script>
+  // Переинициализация при переходах без перезагрузки. Событие приходит
+  // и на первой загрузке страницы, поэтому отдельный вызов не нужен —
+  // иначе обработчики навесились бы дважды.
+  let ready_init = null;
+  function init() {
+    // Повторный вызов на том же адресе пропускаем: иначе на первой
+    // загрузке обработчики навесились бы дважды.
+    if (ready_init === location.pathname) return;
+    ready_init = location.pathname;
+
+  /* Карта подключается по клику. Так страница не платит за сторонний
+     скрипт при каждом заходе — на действующем сайте API Яндекс.Карт
+     грузится на всех страницах сразу, даже там, где карты нет. */
+  document.querySelector('[data-map-load]')?.addEventListener('click', (e) => {
+    const box = e.currentTarget.closest('[data-map]');
+    const frame = document.createElement('iframe');
+    frame.src = 'https://yandex.ru/map-widget/v1/?text=' +
+      encodeURIComponent('Артём, 2-я Рабочая, 6') + '&z=16';
+    frame.title = 'Карта: Артём, ул. 2-я Рабочая, 6';
+    frame.loading = 'lazy';
+    frame.style.cssText = 'width:100%;aspect-ratio:21/9;min-height:320px;border:0;display:block';
+    frame.setAttribute('allowfullscreen', '');
+    box.replaceChildren(frame);
+  });
+  }
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>

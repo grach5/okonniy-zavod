@@ -1,0 +1,134 @@
+---
+/* Визуализации конфигураций в интерьере.
+   ВАЖНО: это трёхмерные визуализации, а не фотографии объектов, и так
+   они и подписаны — в надзаголовке, в лиде и на каждом кадре. Выдавать
+   их за снимки выполненных работ нельзя: реальные фотографии живут
+   отдельно, в разделе «Работы». */
+import { Image } from 'astro:assets';
+import SectionHead from './SectionHead.astro';
+import rassvet from '../assets/vis/panorama-rassvet.png';
+import stvorka from '../assets/vis/panorama-stvorka.png';
+import blok from '../assets/vis/balkonniy-blok.png';
+import obshiy from '../assets/vis/interier-obshiy.png';
+import { url } from '../lib/url.js';
+
+const small = [
+  {
+    src: stvorka,
+    alt: 'Створка панорамного окна в пол крупным планом: белый откос, ручка, за стеклом — залив на рассвете',
+    caption: 'Панорама в пол',
+    note: 'Створка, откос и фурнитура вблизи',
+  },
+  {
+    src: blok,
+    alt: 'Балконный блок: слева окно с подоконником и растениями, справа дверь до пола с фрамугой',
+    caption: 'Балконный блок',
+    note: 'Окно с подоконником и дверь с фрамугой',
+  },
+  {
+    src: obshiy,
+    alt: 'Общий вид комнаты: обеденная группа, подвесной светильник, вдоль стены — окна разных конфигураций',
+    caption: 'Комната целиком',
+    note: 'Шесть конфигураций вдоль одной стены',
+  },
+];
+---
+
+<section class="section wrap" id="vizualizacia">
+  <SectionHead
+    eyebrow="Визуализация"
+    title="Как конфигурация выглядит в комнате"
+    lede="По чертежу трудно понять, что получится: одностворчатое окно и панорама в пол на бумаге отличаются только размером, а в комнате — всем. Это трёхмерные визуализации, а не фотографии объектов. Снимки выполненных работ — в отдельном разделе."
+    split
+  />
+
+  <figure class="vis vis--lead reveal">
+    <Image
+      src={rassvet}
+      alt="Панорамное окно в пол на всю стену комнаты, за стеклом — рассвет над бухтой, портовые краны и город на сопках"
+      widths={[760, 1200, 1680]}
+      sizes="(max-width: 900px) 100vw, 1360px"
+      format="webp"
+      quality={82}
+      loading="lazy"
+      decoding="async"
+    />
+    <figcaption class="vis__cap">
+      <span class="vis__name t-h4">Панорама в пол</span>
+      <span class="small">Трёхстворчатая конструкция во всю высоту помещения</span>
+    </figcaption>
+  </figure>
+
+  <div class="vis-row">
+    {small.map((v) => (
+      <figure class="vis reveal">
+        <Image
+          src={v.src}
+          alt={v.alt}
+          widths={[420, 720, 1080]}
+          sizes="(max-width: 760px) 100vw, 33vw"
+          format="webp"
+          quality={80}
+          loading="lazy"
+          decoding="async"
+        />
+        <figcaption class="vis__cap">
+          <span class="vis__name t-h4">{v.caption}</span>
+          <span class="small">{v.note}</span>
+        </figcaption>
+      </figure>
+    ))}
+  </div>
+
+  <p class="vis__disclaimer small">
+    Визуализации сделаны для этого сайта и показывают конфигурации, а не
+    конкретные объекты. Фотографии выполненных работ — в разделе
+    <a href={url('/raboty')}>Работы</a>.
+  </p>
+</section>
+
+<style>
+  .vis { margin: 0; }
+  .vis :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 0;
+  }
+
+  .vis--lead {
+    margin-top: clamp(26px, 3.4vw, 44px);
+    border-top: var(--line-thick);
+    padding-top: clamp(18px, 2.2vw, 28px);
+  }
+
+  .vis__cap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px clamp(14px, 2vw, 26px);
+    padding-top: 12px;
+    border-top: var(--line-hair);
+    margin-top: 14px;
+  }
+  .vis__name { margin: 0; }
+
+  .vis-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(18px, 2.6vw, 38px);
+    margin-top: clamp(28px, 3.6vw, 52px);
+  }
+
+  .vis__disclaimer {
+    margin-top: clamp(22px, 2.6vw, 34px);
+    padding-top: 14px;
+    border-top: var(--line-hair);
+    max-width: 62ch;
+  }
+  .vis__disclaimer a { color: var(--accent); }
+
+  @media (max-width: 760px) {
+    .vis-row { grid-template-columns: 1fr; }
+  }
+</style>

@@ -1,0 +1,229 @@
+---
+import Base from '../layouts/Base.astro';
+import SectionHead from '../components/SectionHead.astro';
+import Calculator from '../components/Calculator.astro';
+import LeadForm from '../components/LeadForm.astro';
+import Faq from '../components/Faq.astro';
+import { priceTable, PRICE_DISCLAIMER } from '../data/prices.js';
+import { services } from '../data/services.js';
+import { url } from '../lib/url.js';
+
+const faq = [
+  {
+    q: 'Почему цена указана вилкой, а не одной цифрой?',
+    a: 'Потому что одно и то же окно по площади может отличаться в цене вдвое: профиль 60 или 70 мм, однокамерный или двухкамерный стеклопакет, глухая створка или поворотно-откидная. Нижняя граница вилки — базовая комплектация, верхняя — максимальная. Точная цифра появляется после замера.',
+  },
+  {
+    q: 'Что входит в стоимость изделия, а что считается отдельно?',
+    a: 'В стоимость изделия входит сама конструкция: профиль, стеклопакет, фурнитура, уплотнение. Отдельно считаются демонтаж старого окна, монтаж, откосы, подоконник, отлив и москитная сетка — их состав зависит от проёма, и включать их в «цену окна» было бы лукавством.',
+  },
+  {
+    q: 'Замер платный?',
+    a: 'Нет. Выезд замерщика бесплатный и ни к чему не обязывает: вы получаете точный расчёт и решаете сами. Мы не берём предоплату за замер и не включаем его стоимость в договор задним числом.',
+  },
+  {
+    q: 'Цена может вырасти после замера?',
+    a: 'Итоговая цена может отличаться от предварительной в обе стороны — это зависит от реальных размеров и состояния проёма. Но после подписания договора цена фиксируется и не меняется: доплат «за сложность» в процессе монтажа у нас нет.',
+  },
+  {
+    q: 'Как работает рассрочка 0%?',
+    a: 'Без переплаты, сумма делится на равные платежи. Срок и условия обсуждаются при заключении договора и зависят от суммы заказа.',
+  },
+  {
+    q: 'Есть ли скидки при заказе на весь дом или квартиру?',
+    a: 'Да. При остеклении нескольких проёмов одним заказом снижается расход профиля при раскрое, доставка выполняется одним рейсом, бригада работает за один выезд. Эта экономия отражается в расчёте.',
+  },
+];
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+};
+---
+
+<Base
+  title="Цены на окна, двери и остекление балконов"
+  description="Цены на пластиковые окна, двери, остекление балконов и лоджий во Владивостоке и Артёме. Вилки по типовым изделиям, стоимость работ, калькулятор предварительного расчёта."
+  path="ceny"
+  schema={[faqSchema]}
+  breadcrumbs={[{ name: 'Главная', href: '/' }, { name: 'Цены' }]}
+
+  ogImage="og-ceny.png"
+>
+  <section class="head">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Хлебные крошки">
+        <a href={url('/')}>Главная</a><span aria-hidden="true">/</span><span aria-current="page">Цены</span>
+      </nav>
+      <h1 class="head__h1">Цены</h1>
+      <p class="lede head__lede">
+        Мы показываем вилки, а не одну красивую цифру «от». Нижняя граница — базовая
+        комплектация, верхняя — максимальная. Так вы сразу видите, в какой бюджет
+        укладывается задача, ещё до звонка.
+      </p>
+      <p class="head__note small">{PRICE_DISCLAIMER}</p>
+    </div>
+  </section>
+
+  <!-- ============================ ТАБЛИЦЫ ============================ -->
+  <section class="section wrap">
+    <div class="tables">
+      {priceTable.map((group) => (
+        <div class="ptable reveal">
+          <h2 class="ptable__title t-h3">{group.group}</h2>
+          <div class="scroll-x">
+            <table class="ptable__table">
+              <thead>
+                <tr>
+                  <th scope="col">Изделие или работа</th>
+                  <th scope="col">Базовая комплектация</th>
+                  <th scope="col">Максимальная</th>
+                </tr>
+              </thead>
+              <tbody>
+                {group.rows.map((r) => (
+                  <tr>
+                    <th scope="row">{r.name}</th>
+                    <td class="mono">{r.base}</td>
+                    <td class="mono ptable__full">{r.full || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- ========================= КАЛЬКУЛЯТОР ========================= -->
+  <section class="section wrap">
+    <SectionHead
+      eyebrow="Расчёт под ваш проём"
+      title="Соберите свою конфигурацию"
+      lede="Калькулятор считает по той же модели, что и менеджер. Собранная конфигурация переносится в заявку целиком — повторно её никто выспрашивать не будет."
+      split
+    />
+    <Calculator />
+  </section>
+
+  <!-- ====================== ЧТО ВЛИЯЕТ НА ЦЕНУ ====================== -->
+  <section class="section wrap">
+    <SectionHead eyebrow="Из чего складывается" title="Пять вещей, которые двигают цену" split />
+    <div class="pane-grid pane-grid--3">
+      <div class="fac reveal">
+        <span class="fac__w mono">до +44%</span>
+        <h3 class="t-h4">Профиль</h3>
+        <p class="body-2">Переход с 60 мм на 70 мм и с трёх камер на пять. Оправдан для домов, панорам и наветренной стороны, избыточен для типовой квартиры в защищённом дворе.</p>
+      </div>
+      <div class="fac reveal">
+        <span class="fac__w mono">до +26%</span>
+        <h3 class="t-h4">Стеклопакет</h3>
+        <p class="body-2">Энергосберегающее И-стекло, мультифункциональное или шумозащитное с разной толщиной стёкол. Самая заметная по эффекту доплата из всех.</p>
+      </div>
+      <div class="fac reveal">
+        <span class="fac__w mono">−22% / +14%</span>
+        <h3 class="t-h4">Открывание</h3>
+        <p class="body-2">Глухая створка дешевле, но её нельзя вымыть снаружи выше первого этажа. Поворотно-откидная дороже, зато даёт режим микропроветривания.</p>
+      </div>
+      <div class="fac reveal">
+        <span class="fac__w mono">+22%</span>
+        <h3 class="t-h4">Ламинация</h3>
+        <p class="body-2">Декоры под дерево и антрацит RAL 7016. Двусторонняя ламинация — снаружи один цвет, внутри другой — считается отдельно.</p>
+      </div>
+      <div class="fac reveal">
+        <span class="fac__w mono">фикс.</span>
+        <h3 class="t-h4">Работы</h3>
+        <p class="body-2">Демонтаж, монтаж по ГОСТ, откосы, подоконник, отлив. Считаются за изделие и не зависят от того, какой профиль вы выбрали.</p>
+      </div>
+      <div class="fac reveal">
+        <span class="fac__w mono">−</span>
+        <h3 class="t-h4">Объём заказа</h3>
+        <p class="body-2">Остекление всей квартиры или дома одним заказом снижает расход профиля при раскрое и сокращает логистику. Экономия отражается в расчёте.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== ЦЕНЫ ПО НАПРАВЛЕНИЯМ ====================== -->
+  <section class="section wrap">
+    <SectionHead eyebrow="По направлениям" title="Подробные цены и характеристики" split />
+    <div class="pane-grid pane-grid--3">
+      {services.map((s) => (
+        <a class="dir" href={url(`/uslugi/${s.slug}`)}>
+          <span class="t-h4">{s.title}</span>
+          <span class="dir__price mono">от {s.priceFrom.toLocaleString('ru-RU')} {s.priceUnit}</span>
+          <span class="small dir__note">{s.priceNote}</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="section wrap">
+    <div class="faq-layout">
+      <SectionHead eyebrow="Вопросы" title="О цене и оплате" />
+      <Faq items={faq} />
+    </div>
+  </section>
+
+  <section class="section--tight wrap">
+    <LeadForm
+      title="Получить точную цену"
+      lede="Замерщик приедет, снимет размеры, осмотрит проём и оставит расчёт на руках. Выезд бесплатный и ни к чему не обязывает."
+    />
+  </section>
+</Base>
+
+<style>
+  .head {
+    padding-block: clamp(20px, 3vw, 34px) clamp(38px, 6vw, 72px);
+    border-bottom: 1px solid var(--rule);
+    background: radial-gradient(70% 120% at 88% -10%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 64%);
+  }
+  .crumbs { display: flex; gap: 9px; font-size: 13px; color: var(--fg-3); margin-bottom: clamp(24px, 4vw, 46px); }
+  .crumbs a { color: var(--fg-3); text-decoration: none; }
+  .head__h1 { font-size: clamp(38px, 6.4vw, 78px); font-weight: 400; letter-spacing: -0.04em; }
+  .head__lede { max-width: 58ch; margin-top: 18px; }
+  .head__note {
+    max-width: 58ch; margin-top: 20px; padding: 12px 16px;
+    border-left: 2px solid var(--accent); background: var(--surface);
+  }
+
+  .tables { display: flex; flex-direction: column; gap: clamp(34px, 5vw, 60px); }
+  .ptable__title { margin-bottom: 16px; }
+  .ptable__table { width: 100%; border-collapse: collapse; min-width: 560px; }
+  .ptable__table thead th {
+    text-align: left; padding: 12px 16px;
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3);
+    background: var(--surface-2); border-bottom: 1px solid var(--rule-2);
+    white-space: nowrap;
+  }
+  .ptable__table tbody th {
+    text-align: left; font-weight: 500; font-size: 15px;
+    padding: 15px 16px; border-bottom: 1px solid var(--rule);
+  }
+  .ptable__table tbody td {
+    padding: 15px 16px; border-bottom: 1px solid var(--rule);
+    font-size: 14.5px; white-space: nowrap;
+  }
+  .ptable__table tbody tr:hover th, .ptable__table tbody tr:hover td { background: var(--surface); }
+  .ptable__full { color: var(--fg-3); }
+
+  .fac { display: flex; flex-direction: column; gap: 8px; }
+  .fac__w {
+    font-size: 12.5px; color: var(--fg-3); letter-spacing: .04em;
+    padding-bottom: 4px;
+  }
+
+  .dir { display: flex; flex-direction: column; gap: 7px; text-decoration: none; color: inherit; transition: background .25s; }
+  .dir:hover { background: var(--surface-2); }
+  .dir__price { font-size: 14px; color: var(--fg-2); }
+  .dir__note { line-height: 1.45; }
+
+  .faq-layout { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  @media (min-width: 940px) {
+    .faq-layout { grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.35fr); gap: 56px; align-items: start; }
+    .faq-layout > :global(.sec-head) { position: sticky; top: 100px; margin-bottom: 0; }
+  }
+</style>

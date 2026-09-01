@@ -1,0 +1,50 @@
+---
+import Base from '../layouts/Base.astro';
+import { services } from '../data/services.js';
+import { offices, site } from '../data/site.js';
+import { url } from '../lib/url.js';
+const main = offices.find((o) => o.isMain);
+---
+
+<Base
+  title="Страница не найдена"
+  description="Такой страницы на сайте нет. Возможно, она переехала — воспользуйтесь ссылками ниже."
+  path="404"
+  noindex
+>
+  <section class="nf wrap">
+    <div class="nf__inner">
+      <p class="eyebrow">Ошибка 404</p>
+      <h1 class="nf__h1">Такой страницы нет</h1>
+      <p class="lede nf__lede">
+        Возможно, страница переехала или в адресе опечатка.
+        Ниже — то, что ищут чаще всего.
+      </p>
+
+      <div class="nf__links">
+        {services.map((s) => (
+          <a class="chip" href={url(`/uslugi/${s.slug}`)}>{s.nav}</a>
+        ))}
+        <a class="chip" href={url('/ceny')}>Цены</a>
+        <a class="chip" href={url('/kontakty')}>Контакты</a>
+      </div>
+
+      <div class="nf__actions">
+        <a href={url('/')} class="btn">На главную</a>
+        <a href={`tel:${main.phoneHref}`} class="btn btn--ghost">{main.phone}</a>
+      </div>
+      <p class="small">Отдел продаж работает {site.hours}</p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .nf { display: grid; place-items: center; min-height: 64vh; padding-block: clamp(48px, 8vw, 110px); }
+  .nf__inner { display: flex; flex-direction: column; gap: 18px; max-width: 62ch; }
+  .nf__h1 { font-size: clamp(36px, 6vw, 70px); font-weight: 400; letter-spacing: -0.04em; }
+  .nf__lede { max-width: 48ch; }
+  .nf__links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .nf__links .chip { text-decoration: none; transition: border-color .2s, color .2s; }
+  .nf__links .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .nf__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+</style>

@@ -1,0 +1,12 @@
+---
+/* Честный плейсхолдер под будущую фотографию.
+   Реальных снимков производства и объектов у нас нет, а выдавать
+   сгенерированные картинки за фото цеха нельзя. Слот показывает
+   заказчику ровно то, что нужно снять, и выглядит как часть макета. */
+const { note, ratio = 'wide', class: cls = '' } = Astro.props;
+const map = { wide: 'photo-slot--wide', tall: 'photo-slot--tall', square: 'photo-slot--square', standard: '' };
+---
+
+<figure class:list={['photo-slot', map[ratio], cls]} role="img" aria-label={`Место для фотографии: ${note}`}>
+  <figcaption class="photo-slot__note">{note}</figcaption>
+</figure>

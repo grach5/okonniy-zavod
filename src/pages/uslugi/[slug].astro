@@ -1,0 +1,262 @@
+---
+import Base from '../../layouts/Base.astro';
+import SectionHead from '../../components/SectionHead.astro';
+import Faq from '../../components/Faq.astro';
+import LeadForm from '../../components/LeadForm.astro';
+import PhotoSlot from '../../components/PhotoSlot.astro';
+import Steps from '../../components/Steps.astro';
+import Reviews from '../../components/Reviews.astro';
+import { services } from '../../data/services.js';
+import { cities, site } from '../../data/site.js';
+import { url } from '../../lib/url.js';
+
+export function getStaticPaths() {
+  return services.map((s) => ({ params: { slug: s.slug }, props: { service: s } }));
+}
+
+const { service: s } = Astro.props;
+const others = services.filter((x) => x.slug !== s.slug);
+
+const productSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  name: s.title,
+  serviceType: s.title,
+  provider: { '@id': `${site.url}/#organization` },
+  areaServed: cities.map((c) => c.name),
+  description: s.metaDesc,
+  offers: {
+    '@type': 'Offer',
+    priceCurrency: 'RUB',
+    price: s.priceFrom,
+    priceSpecification: {
+      '@type': 'PriceSpecification',
+      minPrice: s.priceFrom,
+      priceCurrency: 'RUB',
+      description: s.priceNote,
+    },
+    availability: 'https://schema.org/InStock',
+  },
+};
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: s.faq.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
+---
+
+<Base
+  title={s.metaTitle}
+  description={s.metaDesc}
+  path={`uslugi/${s.slug}`}
+  schema={[productSchema, faqSchema]}
+  breadcrumbs={[
+    { name: 'Главная', href: '/' },
+    { name: 'Услуги', href: '/#uslugi' },
+    { name: s.title },
+  ]}
+
+  ogImage="og-uslugi.png"
+>
+  <!-- ============================ ШАПКА ============================ -->
+  <section class="top">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Хлебные крошки">
+        <a href={url('/')}>Главная</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{s.title}</span>
+      </nav>
+
+      <div class="top__grid">
+        <div class="top__copy">
+          <h1 class="top__h1">{s.h1}</h1>
+          <p class="lede top__lede">{s.lead}</p>
+          <div class="top__actions">
+            <a href="#zayavka" class="btn btn--lg">Бесплатный замер</a>
+            <a href={url('/ceny')} class="btn btn--lg btn--ghost">Все цены</a>
+          </div>
+        </div>
+
+        <dl class="top__facts">
+          <div><dt>Цена</dt><dd class="mono">от {s.priceFrom.toLocaleString('ru-RU')} {s.priceUnit}</dd></div>
+          <div><dt>Срок</dt><dd class="mono">{s.term}</dd></div>
+          <div><dt>Гарантия</dt><dd class="mono">{s.warranty}</dd></div>
+          <div class="top__facts-note"><dd>{s.priceNote}</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ ВВОДНАЯ ============================ -->
+  <section class="section wrap">
+    <div class="intro">
+      <div class="intro__text">
+        {s.intro.map((p) => <p class="intro__p">{p}</p>)}
+      </div>
+      <PhotoSlot ratio="standard" note={s.photoSlots[0]} class="reveal" />
+    </div>
+  </section>
+
+  <!-- =========================== ЧТО ВАЖНО =========================== -->
+  <section class="section wrap">
+    <SectionHead eyebrow="Что важно" title="На чём здесь чаще всего экономят зря" split />
+    <div class="pane-grid pane-grid--2">
+      {s.features.map((f) => (
+        <div class="feat reveal">
+          <h3 class="t-h4">{f.title}</h3>
+          <p class="body-2">{f.text}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- ========================= ХАРАКТЕРИСТИКИ ========================= -->
+  <section class="section wrap">
+    <div class="specs">
+      <SectionHead eyebrow="Характеристики" title="Что именно вы получаете" />
+      <div class="specs__body">
+        <dl class="specs__list">
+          {s.specs.map(([k, v]) => (
+            <div class="specs__row">
+              <dt>{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))}
+        </dl>
+        {s.photoSlots[1] && <PhotoSlot ratio="wide" note={s.photoSlots[1]} class="reveal" />}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ ЭТАПЫ ============================ -->
+  <section class="section wrap">
+    <SectionHead
+      eyebrow="Как это устроено"
+      title={`Как заказать ${s.titleAcc}`}
+      lede="Порядок одинаковый для всех направлений. Подробно каждый шаг описан на странице «О заводе»."
+      split
+    />
+    <Steps compact />
+  </section>
+
+  <!-- =========================== ВОПРОСЫ =========================== -->
+  <section class="section wrap">
+    <div class="faq-layout">
+      <SectionHead eyebrow="Вопросы" title={`О чём спрашивают, когда выбирают ${s.titleAcc}`} />
+      <Faq items={s.faq} />
+    </div>
+  </section>
+
+  <!-- =========================== ОТЗЫВЫ =========================== -->
+  <section class="section wrap">
+    <SectionHead eyebrow="Отзывы" title="Что говорят клиенты" split />
+    <Reviews limit={3} offset={services.findIndex((x) => x.slug === s.slug)} />
+  </section>
+
+  <!-- =========================== ЗАЯВКА =========================== -->
+  <section class="section--tight wrap">
+    <LeadForm
+      title={`Рассчитать ${s.titleAcc}`}
+      lede="Замерщик приедет в удобное время, снимет размеры и посчитает точную стоимость под ваш проём. Выезд бесплатный и ни к чему не обязывает."
+      service={s.slug}
+    />
+  </section>
+
+  <!-- ========================= ДРУГИЕ УСЛУГИ ========================= -->
+  <section class="section--tight wrap">
+    <SectionHead eyebrow="Ещё" title="Другие направления" />
+    <div class="pane-grid pane-grid--3">
+      {others.map((o) => (
+        <a class="other" href={url(`/uslugi/${o.slug}`)}>
+          <span class="other__name t-h4">{o.title}</span>
+          <span class="other__price mono">от {o.priceFrom.toLocaleString('ru-RU')} {o.priceUnit}</span>
+        </a>
+      ))}
+    </div>
+  </section>
+</Base>
+
+<style>
+  .top {
+    padding-block: clamp(20px, 3vw, 34px) clamp(38px, 6vw, 72px);
+    border-bottom: 1px solid var(--rule);
+    background:
+      radial-gradient(70% 120% at 88% -10%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 64%);
+  }
+  .crumbs {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 9px;
+    font-size: 13px; color: var(--fg-3); margin-bottom: clamp(24px, 4vw, 46px);
+  }
+  .crumbs a { color: var(--fg-3); text-decoration: none; }
+  .crumbs a:hover { color: var(--fg); }
+
+  .top__grid { display: grid; grid-template-columns: 1fr; gap: clamp(28px, 4vw, 52px); }
+  @media (min-width: 940px) { .top__grid { grid-template-columns: minmax(0, 1.35fr) minmax(280px, 1fr); align-items: start; } }
+
+  .top__copy { display: flex; flex-direction: column; gap: 20px; }
+  .top__h1 {
+    font-size: clamp(33px, 5.4vw, 66px);
+    font-weight: 400; letter-spacing: -0.035em; line-height: 1.03;
+    max-width: 18ch;
+  }
+  .top__lede { max-width: 58ch; }
+  .top__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
+
+  .top__facts {
+    margin: 0;
+    display: flex; flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 0;
+    overflow: hidden;
+  }
+  .top__facts > div {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+    padding: 15px 20px; border-bottom: 1px solid var(--rule);
+  }
+  .top__facts > div:last-child { border-bottom: 0; }
+  .top__facts dt { font-size: 13.5px; color: var(--fg-3); }
+  .top__facts dd { margin: 0; font-size: 14.5px; font-weight: 500; text-align: right; }
+  .top__facts-note { background: var(--surface-2); }
+  .top__facts-note dd { font-size: 12.5px; color: var(--fg-3); font-weight: 400; text-align: left; line-height: 1.45; }
+
+  .intro { display: grid; grid-template-columns: 1fr; gap: clamp(28px, 4vw, 52px); align-items: start; }
+  @media (min-width: 900px) { .intro { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); } }
+  .intro__text { display: flex; flex-direction: column; gap: 18px; }
+  .intro__p { font-size: clamp(16.5px, 1.5vw, 19px); line-height: 1.62; color: var(--fg-2); text-wrap: pretty; max-width: 62ch; }
+
+  .feat { display: flex; flex-direction: column; gap: 9px; }
+
+  .specs { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  @media (min-width: 940px) {
+    .specs { grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.4fr); gap: 56px; align-items: start; }
+    .specs > :global(.sec-head) { position: sticky; top: 100px; margin-bottom: 0; }
+  }
+  .specs__body { display: flex; flex-direction: column; gap: 28px; }
+  .specs__list { margin: 0; border-top: 1px solid var(--rule); }
+  .specs__row {
+    display: grid; grid-template-columns: 1fr; gap: 2px;
+    padding: 15px 2px; border-bottom: 1px solid var(--rule);
+  }
+  @media (min-width: 560px) { .specs__row { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 24px; align-items: baseline; } }
+  .specs__row dt { font-size: 14px; color: var(--fg-3); }
+  .specs__row dd { margin: 0; font-size: 15px; font-weight: 500; }
+
+  .faq-layout { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  @media (min-width: 940px) {
+    .faq-layout { grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.35fr); gap: 56px; align-items: start; }
+    .faq-layout > :global(.sec-head) { position: sticky; top: 100px; margin-bottom: 0; }
+  }
+
+  .other {
+    display: flex; flex-direction: column; gap: 8px;
+    text-decoration: none; color: inherit; transition: background .25s;
+  }
+  .other:hover { background: var(--surface-2); }
+  .other__price { font-size: 13.5px; color: var(--fg-2); }
+</style>

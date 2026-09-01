@@ -1,0 +1,65 @@
+# Сборка и публикация на GitHub Pages.
+#
+# Сайт живёт в подпапке grach5.github.io/<репозиторий>/, поэтому в сборку
+# передаётся BASE_PATH — без него все внутренние ссылки уводили бы в
+# корень домена. PUBLIC_DEMO закрывает стенд от индексации: на нём стоят
+# реальные реквизиты завода, но расчётные цены, и попадание такой копии
+# в поиск конкурировало бы с настоящим сайтом компании.
+
+name: Публикация на GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Параллельные публикации не нужны: важна последняя.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Установка зависимостей
+        run: npm ci
+
+      - name: Сборка
+        env:
+          BASE_PATH: ${{ github.event.repository.name }}
+          SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+          PUBLIC_DEMO: '1'
+        run: npm run build
+
+      - name: Проверка собранного сайта
+        env:
+          BASE_PATH: ${{ github.event.repository.name }}
+        run: node scripts/audit.mjs
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,123 @@
+---
+import Base from '../layouts/Base.astro';
+import SectionHead from '../components/SectionHead.astro';
+import LeadForm from '../components/LeadForm.astro';
+import { services } from '../data/services.js';
+import { works, site } from '../data/site.js';
+import { url } from '../lib/url.js';
+
+/* Раздел портфолио. На действующем сайте его нет вообще — при том что
+   «собственное производство» заявлено как главное преимущество.
+   Фотографии взяты из Telegram-канала самой компании: это их работы,
+   опубликованные ими же. Снимков цеха публично нет — их нужно доснять,
+   список нужных кадров в README. */
+---
+
+<Base
+  title="Наши работы: объекты в Приморье"
+  description="Выполненные объекты Оконного завода: остекление и отделка лоджий, окна в квартиры, раздвижные системы. Реальные фотографии работ во Владивостоке и Артёме."
+  path="raboty"
+  breadcrumbs={[{ name: 'Главная', href: '/' }, { name: 'Наши работы' }]}
+>
+  <section class="head">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Хлебные крошки">
+        <a href={url('/')}>Главная</a><span aria-hidden="true">/</span><span aria-current="page">Наши работы</span>
+      </nav>
+      <h1 class="head__h1">Наши работы</h1>
+      <p class="lede head__lede">
+        Лоджии, окна и раздвижные системы на объектах в Приморье.
+        Для каждой работы указано, что именно ставили — это полезнее,
+        чем просто красивая картинка.
+      </p>
+    </div>
+  </section>
+
+  <section class="section wrap">
+    <div class="cases">
+      {works.map((w, i) => (
+        <article class="case reveal">
+          <figure class="case__media">
+            <img src={w.img} alt={w.alt} width={w.w} height={w.h}
+                 loading={i < 2 ? 'eager' : 'lazy'} decoding="async" />
+          </figure>
+          <div class="case__body">
+            <span class="case__n label">{String(i + 1).padStart(2, '0')}</span>
+            <h2 class="case__title t-h3">{w.title}</h2>
+            <p class="case__scope label">{w.scope}</p>
+            <p class="body-2">{w.detail}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+
+    <p class="note small">
+      Фотографии опубликованы компанией в собственном
+      <a href={site.social.telegram} target="_blank" rel="noopener">Telegram-канале</a>.
+      Больше объектов — там же и во <a href={site.social.vk} target="_blank" rel="noopener">ВКонтакте</a>.
+    </p>
+  </section>
+
+  <section class="section wrap">
+    <SectionHead eyebrow="По направлениям" title="Смотреть по типу остекления" split />
+    <div class="pane-grid pane-grid--3">
+      {services.map((s) => (
+        <a class="dir" href={url(`/uslugi/${s.slug}`)}>
+          <span class="t-h4">{s.title}</span>
+          <span class="small dir__note">{s.priceNote}</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="section--tight wrap">
+    <LeadForm
+      title="Хотите так же?"
+      lede="Опишите объект — менеджер подберёт комплектацию и назовёт вилку стоимости ещё до выезда замерщика."
+    />
+  </section>
+</Base>
+
+<style>
+  .head {
+    padding-block: clamp(20px, 3vw, 34px) clamp(38px, 6vw, 72px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .crumbs { display: flex; gap: 9px; font-size: 13px; color: var(--fg-3); margin-bottom: clamp(24px, 4vw, 46px); }
+  .crumbs a { color: var(--fg-3); text-decoration: none; }
+  .head__h1 { font-size: clamp(38px, 6.4vw, 78px); }
+  .head__lede { max-width: 58ch; margin-top: 18px; }
+
+  .cases { display: flex; flex-direction: column; gap: clamp(40px, 6vw, 96px); }
+
+  .case { display: grid; grid-template-columns: 1fr; gap: clamp(20px, 3vw, 48px); align-items: center; }
+  @media (min-width: 900px) {
+    .case { grid-template-columns: 5fr 7fr; }
+    .case:nth-child(even) .case__media { order: 2; }
+  }
+
+  .case__media { margin: 0; border: 1px solid var(--rule); overflow: hidden; background: var(--surface); }
+  .case__media img {
+    width: 100%; height: auto; display: block;
+    filter: saturate(.82) contrast(1.04) brightness(.92);
+    transition: filter .6s cubic-bezier(.16,.8,.3,1), transform .8s cubic-bezier(.16,.8,.3,1);
+  }
+  .case:hover .case__media img { filter: none; transform: scale(1.02); }
+
+  .case__body { display: flex; flex-direction: column; gap: 12px; }
+  .case__n { color: var(--fg-3); }
+  .case__title { margin-top: 2px; }
+  .case__scope { color: var(--fg-3); }
+  .case__body .body-2 { max-width: 52ch; }
+
+  .note { margin-top: clamp(34px, 5vw, 60px); padding-top: 20px; border-top: 1px solid var(--rule); max-width: 70ch; }
+  .note a { color: var(--fg-2); }
+
+  .dir { display: flex; flex-direction: column; gap: 7px; text-decoration: none; color: inherit; transition: background .25s; }
+  .dir:hover { background: var(--surface); }
+  .dir__note { line-height: 1.45; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .case:hover .case__media img { transform: none; }
+  }
+</style>

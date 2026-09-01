@@ -1,0 +1,242 @@
+---
+import { Image } from 'astro:assets';
+import { site, offices } from '../data/site.js';
+import WindowScene from './WindowScene.astro';
+import plate from '../assets/vis/interier-obshiy.png';
+const main = offices.find((o) => o.isMain);
+
+/* Первый экран собран по разбору референсов:
+   кадр занимает весь экран, продукт — единственное его содержимое,
+   текста ровно столько, сколько было в «The waterline» и «The Obsidian Polo»:
+   рубрика мелким капслоком, два слова антиквой, строка характеристик, одна ссылка.
+   Цифры, телефон и услуги вынесены ниже, за пределы кадра. */
+---
+
+<section class="hero on-dark">
+  <!-- сцена во весь экран -->
+  <div class="hero__stage" aria-hidden="true">
+    <WindowScene />
+
+    <!-- Подложка. Показывается сразу, до загрузки движка, и остаётся
+         навсегда там, где трёхмерная сцена не запускается: без WebGL,
+         при экономии трафика и с выключенным JavaScript. Заодно это
+         элемент LCP — первая отрисовка перестаёт быть пустой. -->
+    <Image
+      class="hero__plate"
+      src={plate}
+      alt=""
+      widths={[900, 1440, 1920]}
+      sizes="100vw"
+      format="webp"
+      quality={72}
+      loading="eager"
+      fetchpriority="high"
+      decoding="async"
+    />
+
+    <span class="hero__veil"></span>
+  </div>
+
+  <!-- тип поверх кадра -->
+  <div class="hero__type wrap">
+    <p class="hero__kicker">Оконный завод · Артём · с {site.founded}</p>
+    <h1 class="hero__title">Тёплый контур</h1>
+    <p class="hero__spec">
+      REHAU и WHS by VEKA · собственное производство {site.productionArea}&nbsp;м² · монтаж по ГОСТ
+    </p>
+    <a href="#zayavka" class="hero__cta">
+      Бесплатный замер
+      <svg width="26" height="8" viewBox="0 0 26 8" fill="none" aria-hidden="true">
+        <path d="M0 4h24M21 1l3.5 3-3.5 3" stroke="currentColor" stroke-width="1" />
+      </svg>
+    </a>
+  </div>
+
+  <div class="hero__base wrap">
+    <a class="hero__phone" href={`tel:${main.phoneHref}`}>{main.phone}</a>
+    <span class="hero__scroll">
+      <span>листайте</span>
+      <i></i>
+    </span>
+  </div>
+</section>
+
+<!-- цифры вынесены из кадра: в референсах на первом экране их нет -->
+<section class="facts">
+  <dl class="wrap facts__row">
+    <div><dt>{site.founded}</dt><dd>на рынке</dd></div>
+    <div><dt>{site.productionArea} м²</dt><dd>цех в Артёме</dd></div>
+    <div><dt>{site.employees}</dt><dd>сотрудников</dd></div>
+    <div><dt>от {site.priceFrom.toLocaleString('ru-RU')} ₽</dt><dd>за м²</dd></div>
+  </dl>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+    isolation: isolate;
+    background: var(--bg);
+  }
+
+  /* ---------------- кадр ---------------- */
+
+  .hero__stage { position: absolute; inset: 0; z-index: 0; }
+
+  /* затемнение слева, чтобы тип читался поверх кадра */
+  .hero__veil {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(100deg, rgba(10,10,11,.95) 0%, rgba(10,10,11,.74) 32%, rgba(10,10,11,.14) 62%, transparent 82%),
+      linear-gradient(0deg, rgba(10,10,11,.92) 0%, transparent 34%);
+    pointer-events: none;
+  }
+  @media (max-width: 899px) {
+    .hero__veil {
+      background: linear-gradient(0deg, rgba(10,10,11,.96) 0%, rgba(10,10,11,.72) 34%, rgba(10,10,11,.26) 62%, transparent 88%);
+    }
+  }
+
+  /* ---------------- тип ---------------- */
+
+  .hero__type {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: clamp(18px, 2.4vw, 30px);
+    padding-bottom: clamp(28px, 5vw, 68px);
+  }
+
+  .hero__kicker {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    color: var(--fg-3);
+  }
+
+  .hero__title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(46px, 12vw, 190px);
+    line-height: .88;
+    letter-spacing: -0.038em;
+    color: var(--fg);
+    text-wrap: balance;
+    max-width: 12ch;
+  }
+
+  .hero__spec {
+    font-family: var(--font-mono);
+    font-size: clamp(9.5px, .78vw, 11px);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    line-height: 2;
+    color: var(--fg-3);
+    max-width: 46ch;
+    padding-top: 6px;
+    border-top: 1px solid rgb(var(--fg-rgb) / .18);
+  }
+
+  /* ссылка вместо кнопки: в кадрах Octaboot именно подчёркнутая строка */
+  .hero__cta {
+    display: inline-flex; align-items: center; gap: 14px;
+    padding-bottom: 10px;
+    min-height: 44px;
+    font-family: var(--font-mono);
+    font-size: 11.5px; letter-spacing: .22em; text-transform: uppercase;
+    color: var(--fg); text-decoration: none;
+    border-bottom: 1px solid rgb(var(--fg-rgb) / .38);
+    transition: color .25s, border-color .25s, gap .25s;
+  }
+  .hero__cta:hover { color: var(--accent); border-color: var(--accent); gap: 20px; }
+  .hero__cta svg { flex: none; }
+
+  /* ---------------- нижняя строка ---------------- */
+
+  .hero__base {
+    position: relative; z-index: 2;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 20px;
+    padding-bottom: clamp(18px, 2.4vw, 32px);
+  }
+  .hero__phone {
+    display: inline-flex; align-items: center;
+    min-height: 44px;              /* минимальная цель для пальца */
+    font-family: var(--font-mono);
+    font-size: 12px; letter-spacing: .1em;
+    color: var(--fg-3); text-decoration: none;
+    transition: color .25s;
+  }
+  .hero__phone:hover { color: var(--fg); }
+
+  .hero__scroll {
+    display: flex; align-items: center; gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 9.5px; letter-spacing: .28em; text-transform: uppercase;
+    color: var(--fg-3);
+  }
+  .hero__scroll i {
+    display: block; width: 44px; height: 1px;
+    background: rgb(var(--fg-rgb) / .2);
+    position: relative; overflow: hidden;
+  }
+  .hero__scroll i::after {
+    content: ""; position: absolute; inset: 0;
+    background: var(--fg);
+    animation: sweep 2.8s cubic-bezier(.6,0,.4,1) infinite;
+  }
+  @keyframes sweep {
+    0%   { transform: translateX(-100%); }
+    60%  { transform: translateX(100%); }
+    100% { transform: translateX(100%); }
+  }
+  @media (prefers-reduced-motion: reduce) { .hero__scroll i::after { animation: none; opacity: .4; } }
+
+  /* ---------------- подложка ---------------- */
+
+  .hero__plate {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* кадрируем вправо: слева, под текстом, остаётся тёмная часть комнаты */
+    object-position: 66% 52%;
+    transition: opacity 1.2s cubic-bezier(.16,.8,.3,1);
+  }
+  .hero__stage.has-gl .hero__plate { opacity: 0; }
+
+  /* ---------------- полоса цифр под кадром ---------------- */
+
+  .facts {
+    border-top: 1px solid rgb(var(--fg-rgb) / .13);
+    border-bottom: 1px solid rgb(var(--fg-rgb) / .13);
+  }
+  .facts__row {
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 22px clamp(20px, 4vw, 60px);
+    padding-block: clamp(22px, 3vw, 34px);
+  }
+  @media (min-width: 760px) { .facts__row { grid-template-columns: repeat(4, 1fr); } }
+  .facts__row > div { display: flex; flex-direction: column; gap: 6px; }
+  .facts__row dt {
+    font-family: var(--font-mono);
+    font-size: clamp(16px, 1.7vw, 21px);
+    color: var(--fg); font-variant-numeric: tabular-nums;
+  }
+  .facts__row dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--fg-3);
+  }
+</style>

@@ -1,0 +1,78 @@
+---
+import { reviews, site } from '../data/site.js';
+
+/* limit/offset позволяют показывать на каждой странице свою выборку.
+   Без этого один и тот же блок отзывов повторялся бы на 19 страницах —
+   ровно тот дубль-контент, из-за которого страницы услуг действующего
+   сайта склеиваются поиском в одну. */
+const { limit = reviews.length, offset = 0 } = Astro.props;
+const shown = Array.from({ length: Math.min(limit, reviews.length) },
+  (_, i) => reviews[(offset + i) % reviews.length]);
+---
+
+<div class="rev">
+  <div class="rev__grid">
+    {shown.map((r) => (
+      <figure class="rev__item reveal">
+        <blockquote class="rev__text">{r.text}</blockquote>
+        <figcaption class="rev__meta">
+          <span class="rev__name">{r.name}</span>
+          {r.url
+            ? <a class="rev__src" href={r.url} target="_blank" rel="noopener nofollow">Проверить на {r.source}</a>
+            : <span class="rev__src rev__src--flat">{r.source}</span>}
+        </figcaption>
+      </figure>
+    ))}
+  </div>
+
+  <div class="rev__sources">
+    <p class="small">Отзывы можно проверить на независимых площадках:</p>
+    <div class="rev__links">
+      {site.reviewsOn.map((s) => (
+        <a class="chip" href={s.url} target="_blank" rel="noopener nofollow">{s.name}</a>
+      ))}
+    </div>
+  </div>
+</div>
+
+<style>
+  .rev__grid {
+    display: grid;
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 0;
+    overflow: hidden;
+  }
+  @media (min-width: 700px)  { .rev__grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1060px) { .rev__grid { grid-template-columns: repeat(3, 1fr); } }
+
+  .rev__item {
+    background: var(--surface);
+    padding: clamp(22px, 2.6vw, 30px);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    justify-content: space-between;
+  }
+  .rev__text {
+    margin: 0;
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: var(--fg-2);
+    text-wrap: pretty;
+  }
+  .rev__text::before { content: "«"; color: var(--fg-3); }
+  .rev__text::after { content: "»"; color: var(--fg-3); }
+  .rev__meta { display: flex; flex-direction: column; gap: 3px; }
+  .rev__name { font-size: 14.5px; font-weight: 600; }
+  .rev__src { font-size: 12.5px; color: var(--fg-2); }
+  .rev__src--flat { color: var(--fg-3); }
+
+  .rev__sources {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px;
+    margin-top: 22px;
+  }
+  .rev__links { display: flex; flex-wrap: wrap; gap: 8px; }
+</style>

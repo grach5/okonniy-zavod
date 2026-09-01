@@ -1,0 +1,324 @@
+---
+import { site, offices } from '../data/site.js';
+import { services } from '../data/services.js';
+import Logo from './Logo.astro';
+import { url, stripBase } from '../lib/url.js';
+
+const main = offices.find((o) => o.isMain);
+// В подпапке pathname включает базовую часть, и сравнение с '/ceny'
+// никогда бы не сработало — активный пункт не подсвечивался бы.
+const here = stripBase(Astro.url.pathname);
+const isActive = (href) => here === href || (href !== '/' && here.startsWith(href));
+
+/* Навигация намеренно короткая: логотип, три пункта и одна кнопка.
+   Телефон оставлен — в оконной нише это основной канал, но подан тихо,
+   без иконок и часов работы: они есть в первом экране и в подвале. */
+const nav = [
+  { href: '/ceny', label: 'Цены' },
+  { href: '/raboty', label: 'Работы' },
+  { href: '/kontakty', label: 'Контакты' },
+];
+---
+
+<header class="hdr" data-header>
+  <div class="hdr__bar wrap">
+    <a href={url('/')} class="hdr__logo" aria-label="Оконный завод — на главную">
+      <Logo />
+    </a>
+
+    <nav class="hdr__nav" aria-label="Основное меню">
+      <div class="hdr__drop">
+        <button
+          type="button"
+          class="hdr__link hdr__link--drop"
+          aria-expanded="false"
+          aria-controls="services-menu"
+          data-drop-trigger
+        >
+          Услуги
+        </button>
+        <div class="hdr__menu" id="services-menu" data-drop-menu hidden>
+          {services.map((s) => (
+            <a href={url(`/uslugi/${s.slug}`)} class="hdr__menu-item">
+              <span class="hdr__menu-title">{s.nav}</span>
+              <span class="hdr__menu-price mono">от {s.priceFrom.toLocaleString('ru-RU')} {s.priceUnit}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {nav.map((n) => (
+        <a href={url(n.href)} class="hdr__link" aria-current={isActive(n.href) ? 'page' : undefined}>
+          {n.label}
+        </a>
+      ))}
+    </nav>
+
+    <div class="hdr__side">
+      <button type="button" class="hdr__theme" data-theme-toggle
+              aria-label="Переключить светлую и тёмную тему">
+        <svg class="hdr__theme-sun" width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.2" />
+          <path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6" />
+        </svg>
+        <svg class="hdr__theme-moon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+             stroke-linejoin="round" aria-hidden="true">
+          <path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1Z" />
+        </svg>
+      </button>
+      <a class="hdr__phone mono" href={`tel:${main.phoneHref}`}>{main.phone}</a>
+      <a href="#zayavka" class="btn btn--sm hdr__cta">Замер</a>
+      <button type="button" class="hdr__burger" aria-expanded="false" aria-controls="mobile-menu" data-burger>
+        <span class="visually-hidden">Открыть меню</span>
+        <span class="hdr__burger-line" aria-hidden="true"></span>
+        <span class="hdr__burger-line" aria-hidden="true"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Мобильное меню. На действующем сайте бургер собран на <div> и
+       недоступен с клавиатуры — здесь это кнопка с корректными состояниями -->
+  <div class="mnav" id="mobile-menu" data-mobile-menu hidden>
+    <div class="mnav__inner wrap">
+      <p class="label">Услуги</p>
+      <div class="mnav__group">
+        {services.map((s) => (
+          <a href={url(`/uslugi/${s.slug}`)} class="mnav__item">
+            <span>{s.nav}</span>
+            <span class="mono mnav__price">от {s.priceFrom.toLocaleString('ru-RU')} {s.priceUnit}</span>
+          </a>
+        ))}
+      </div>
+      <p class="label">Компания</p>
+      <div class="mnav__group">
+        <a href={url('/ceny')} class="mnav__item"><span>Цены</span></a>
+        <a href={url('/raboty')} class="mnav__item"><span>Наши работы</span></a>
+        <a href={url('/o-kompanii')} class="mnav__item"><span>О заводе</span></a>
+        <a href={url('/garantiya')} class="mnav__item"><span>Гарантия</span></a>
+        <a href={url('/kontakty')} class="mnav__item"><span>Контакты</span></a>
+      </div>
+      <div class="mnav__foot">
+        <a class="mnav__phone mono" href={`tel:${main.phoneHref}`}>{main.phone}</a>
+        <span class="small">{site.hours}</span>
+        <a href="#zayavka" class="btn btn--block">Записаться на замер</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<style>
+  .hdr {
+    position: sticky;
+    top: 0;
+    z-index: 60;
+    background: transparent;
+    transition: background .4s, border-color .4s, backdrop-filter .4s;
+    border-bottom: 1px solid transparent;
+  }
+  /* Пока первый экран не прокручен — шапка прозрачная и лежит поверх кадра */
+  .hdr.is-stuck {
+    background: rgba(10, 10, 11, .88);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-bottom: 2px solid rgb(var(--fg-rgb) / .55);
+  }
+
+  .hdr__bar {
+    display: flex;
+    align-items: center;
+    gap: clamp(16px, 3vw, 44px);
+    min-height: 68px;
+  }
+  .hdr__logo { flex: none; text-decoration: none; color: var(--fg); display: flex; align-items: center; min-height: 44px; }
+
+  .hdr__nav { display: none; align-items: center; gap: 6px; margin-left: clamp(8px, 3vw, 40px); }
+  @media (min-width: 1000px) { .hdr__nav { display: flex; } }
+
+  .hdr__link {
+    display: inline-flex; align-items: center;
+    padding: 9px 14px;
+    font-family: var(--font-mono);
+    font-size: 10.5px; font-weight: 400;
+    letter-spacing: .2em; text-transform: uppercase;
+    color: var(--fg-2); text-decoration: none;
+    background: none; border: 0; cursor: pointer;
+    transition: color .25s;
+    white-space: nowrap;
+  }
+  .hdr__link:hover { color: var(--accent); }
+  .hdr__link[aria-current="page"] { color: var(--fg); }
+  .hdr__link--drop[aria-expanded="true"] { color: var(--accent); }
+
+  .hdr__drop { position: relative; }
+  .hdr__menu {
+    position: absolute; top: calc(100% + 10px); left: 0;
+    min-width: 340px;
+    background: rgba(18, 18, 21, .96);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--rule);
+    border-radius: 0;
+    box-shadow: none;
+    padding: 8px;
+    display: flex; flex-direction: column;
+    animation: dropIn .2s cubic-bezier(.16,.8,.3,1);
+  }
+  .hdr__menu[hidden] { display: none; }
+  @keyframes dropIn { from { opacity: 0; transform: translateY(-8px); } }
+  .hdr__menu-item {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 20px;
+    padding: 12px 14px;
+    text-decoration: none; color: var(--fg);
+    transition: background .2s;
+  }
+  .hdr__menu-item:hover { background: rgb(var(--fg-rgb) / .06); }
+  .hdr__menu-title { font-size: 14.5px; font-weight: 500; }
+  .hdr__menu-price { font-size: 11.5px; color: var(--fg-3); white-space: nowrap; }
+
+  .hdr__side { display: flex; align-items: center; gap: 14px; margin-left: auto; }
+  .hdr__phone {
+    display: none; align-items: center; min-height: 44px;
+    font-size: 14px; color: var(--fg-2); text-decoration: none;
+    white-space: nowrap; transition: color .25s;
+  }
+  .hdr__phone:hover { color: var(--fg); }
+  @media (min-width: 620px) { .hdr__phone { display: inline-flex; } }
+  .hdr__cta { display: none; }
+  @media (min-width: 1000px) { .hdr__cta { display: inline-flex; } }
+
+  .hdr__burger {
+    display: grid; place-content: center; gap: 5px;
+    width: 44px; height: 44px;
+    background: none; border: 1px solid var(--rule-2); border-radius: 0;
+    cursor: pointer;
+  }
+  @media (min-width: 1000px) { .hdr__burger { display: none; } }
+  .hdr__burger-line { display: block; width: 16px; height: 1px; background: var(--fg); transition: transform .3s, opacity .3s; }
+  .hdr__burger[aria-expanded="true"] .hdr__burger-line:first-child { transform: translateY(3px) rotate(45deg); }
+  .hdr__burger[aria-expanded="true"] .hdr__burger-line:last-child { transform: translateY(-3px) rotate(-45deg); }
+
+  /* ---------------- мобильное меню ---------------- */
+
+  .mnav {
+    position: fixed; inset: 68px 0 0;
+    background: rgba(10, 10, 11, .99);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    overflow-y: auto;
+    z-index: 55;
+    animation: mnavIn .26s cubic-bezier(.16,.8,.3,1);
+  }
+  .mnav[hidden] { display: none; }
+  @keyframes mnavIn { from { opacity: 0; transform: translateY(-10px); } }
+  .mnav__inner { display: flex; flex-direction: column; gap: 10px; padding-block: 26px 44px; }
+  .mnav__inner .label { margin-top: 14px; }
+  .mnav__group { display: flex; flex-direction: column; border-top: 1px solid var(--rule); }
+  .mnav__item {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+    padding: 17px 2px; border-bottom: 1px solid var(--rule);
+    text-decoration: none; color: var(--fg); font-size: 17px; font-weight: 500;
+  }
+  .mnav__price { font-size: 12px; color: var(--fg-3); }
+  .mnav__foot { display: flex; flex-direction: column; gap: 6px; margin-top: 22px; }
+  .mnav__phone { font-size: 24px; color: var(--fg); text-decoration: none; }
+  .mnav__foot .btn { margin-top: 16px; }
+
+  /* --- переключатель темы ---
+     Иконка показывает не текущее состояние, а то, куда переключишь:
+     на светлой странице — луна. Так пользователь читает кнопку как
+     действие, а не как индикатор. */
+  .hdr__theme {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin-right: 4px;
+    background: none;
+    border: 0;
+    color: var(--fg-2);
+    cursor: pointer;
+    transition: color .2s ease;
+  }
+  .hdr__theme:hover { color: var(--fg); }
+  .hdr__theme svg { grid-area: 1 / 1; }
+  .hdr__theme-sun { display: none; }
+  :root[data-theme="dark"] .hdr__theme-sun { display: block; }
+  :root[data-theme="dark"] .hdr__theme-moon { display: none; }
+
+</style>
+
+<script>
+  // Переинициализация при переходах без перезагрузки. Событие приходит
+  // и на первой загрузке страницы, поэтому отдельный вызов не нужен —
+  // иначе обработчики навесились бы дважды.
+  let ready_init = null;
+  function init() {
+    // Повторный вызов на том же адресе пропускаем: иначе на первой
+    // загрузке обработчики навесились бы дважды.
+    if (ready_init === location.pathname) return;
+    ready_init = location.pathname;
+
+    // Переключатель темы. Выбор запоминаем: возвращаться к системной
+    // настройке после каждого перехода — значит игнорировать решение
+    // пользователя.
+    const themeBtn = document.querySelector('[data-theme-toggle]');
+    if (themeBtn) {
+      themeBtn.addEventListener('click', () => {
+        const next =
+          document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = next;
+        try { localStorage.setItem('theme', next); } catch (e) {}
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.content = next === 'dark' ? '#0A0A0C' : '#F7F5F1';
+      });
+    }
+
+
+  /* --- шапка становится непрозрачной после первого экрана --- */
+  const header = document.querySelector('[data-header]');
+  if (header) {
+    const onScroll = () => header.classList.toggle('is-stuck', window.scrollY > 40);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
+
+  /* --- выпадающее меню услуг --- */
+  const trigger = document.querySelector('[data-drop-trigger]');
+  const menu = document.querySelector('[data-drop-menu]');
+  if (trigger && menu) {
+    const setOpen = (open) => {
+      trigger.setAttribute('aria-expanded', String(open));
+      menu.hidden = !open;
+    };
+    trigger.addEventListener('click', () => setOpen(menu.hidden));
+    document.addEventListener('click', (e) => {
+      if (!menu.hidden && !menu.contains(e.target) && !trigger.contains(e.target)) setOpen(false);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !menu.hidden) { setOpen(false); trigger.focus(); }
+    });
+    trigger.parentElement.addEventListener('mouseleave', () => setOpen(false));
+  }
+
+  /* --- мобильное меню --- */
+  const burger = document.querySelector('[data-burger]');
+  const mnav = document.querySelector('[data-mobile-menu]');
+  if (burger && mnav) {
+    const setOpen = (open) => {
+      burger.setAttribute('aria-expanded', String(open));
+      mnav.hidden = !open;
+      document.body.style.overflow = open ? 'hidden' : '';
+      burger.querySelector('.visually-hidden').textContent = open ? 'Закрыть меню' : 'Открыть меню';
+    };
+    burger.addEventListener('click', () => setOpen(mnav.hidden));
+    mnav.addEventListener('click', (e) => { if (e.target.closest('a')) setOpen(false); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !mnav.hidden) { setOpen(false); burger.focus(); }
+    });
+  }
+  }
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>

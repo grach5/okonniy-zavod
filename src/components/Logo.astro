@@ -1,0 +1,48 @@
+---
+/* Знак компании. Восстановлен по фирменному блоку из их Telegram-канала:
+   синий квадрат с белым оконным переплётом. Оригинал растровый — здесь
+   векторная версия, которая не пикселит и читается на тёмном фоне. */
+const { compact = false } = Astro.props;
+---
+
+<span class="logo">
+  <svg class="logo__mark" width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+    <rect width="34" height="34" rx="3" fill="#1B4F8C" />
+    <g fill="#FFFFFF">
+      <rect x="7"    y="7"    width="8.4" height="8.4" />
+      <rect x="18.6" y="7"    width="8.4" height="8.4" />
+      <rect x="7"    y="18.6" width="8.4" height="8.4" />
+      <rect x="18.6" y="18.6" width="8.4" height="8.4" />
+    </g>
+  </svg>
+
+  {!compact && (
+    <span class="logo__text">
+      <span class="logo__name">Оконный завод</span>
+      <span class="logo__tag">Приморский край · с 2010 года</span>
+    </span>
+  )}
+</span>
+
+<style>
+  .logo { display: inline-flex; align-items: center; gap: 12px; }
+  .logo__mark { flex: none; }
+  .logo__text { display: flex; flex-direction: column; line-height: 1.1; }
+  .logo__name {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+  .logo__tag {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--fg-3);
+    margin-top: 4px;
+    white-space: nowrap;
+  }
+  @media (max-width: 460px) { .logo__tag { display: none; } }
+</style>

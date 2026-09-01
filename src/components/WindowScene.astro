@@ -1,0 +1,528 @@
+---
+/* Кинематографичная секвенция в первом экране.
+   Вместо видеофайла — настоящая трёхмерная сцена, в которой по очереди
+   собираются шесть конфигураций: от одностворчатого окна до панорамы в пол.
+   Переход между кадрами — уход старой формы, дуга камеры и сборка новой.
+
+   Почему не видео: ролик пришлось бы снимать, весил бы он мегабайты,
+   пикселил на больших экранах и не подстраивался под формат кадра.
+   Здесь то же самое считается в браузере и адаптируется под любой экран.
+
+   Движок грузится динамически и только при выполненных условиях:
+   есть WebGL 2, экран не крошечный, движение не отключено в системе.
+   Иначе остаётся CSS-композиция, которая лежит слоем ниже. */
+
+const shots = [
+  { n: 'Одностворчатое', spec: 'кухня · санузел · 800 × 1400' },
+  { n: 'Двухстворчатое', spec: 'комната · поворотно-откидное · 1300 × 1400' },
+  { n: 'Трёхстворчатое', spec: 'зал · три секции · 2100 × 1400' },
+  { n: 'Арочное',        spec: 'нестандартная геометрия · гнутый профиль' },
+  { n: 'Балконный блок', spec: 'окно и дверь одним изделием · штульп' },
+  { n: 'Панорама в пол', spec: 'алюминий с терморазрывом · триплекс' },
+];
+---
+
+<canvas class="scene" data-gl aria-hidden="true"></canvas>
+
+<!-- титр к текущему кадру -->
+<div class="film" data-film hidden>
+  <div class="film__bars" aria-hidden="true">
+    {shots.map((_, i) => <span class="film__bar" data-bar={i}><i></i></span>)}
+  </div>
+  <p class="film__n mono" data-film-n>01 / 06</p>
+  <p class="film__name" data-film-name>{shots[0].n}</p>
+  <p class="film__spec label" data-film-spec>{shots[0].spec}</p>
+</div>
+
+<script type="application/json" data-shots set:html={JSON.stringify(shots)} />
+
+<style>
+  .scene {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 1.4s cubic-bezier(.16,.8,.3,1);
+    pointer-events: none;
+  }
+  .scene.is-ready { opacity: 1; }
+
+  /* ---------------- титр ---------------- */
+
+  .film {
+    position: absolute;
+    right: var(--gutter);
+    bottom: clamp(96px, 15vh, 200px);
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    text-align: right;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 1s ease .6s;
+  }
+  .film.is-ready { opacity: 1; }
+  .film[hidden] { display: none; }
+  @media (max-width: 899px) {
+    .film {
+      right: var(--gutter); left: var(--gutter);
+      align-items: flex-start; text-align: left;
+      bottom: auto; top: 84px;
+      gap: 7px;
+    }
+    .film__name { font-size: 18px; }
+    .film__spec { font-size: 9.5px; }
+  }
+
+  .film__bars { display: flex; gap: 5px; margin-bottom: 4px; }
+  .film__bar {
+    display: block; width: 26px; height: 1px;
+    background: rgb(var(--fg-rgb) / .22);
+    overflow: hidden;
+  }
+  .film__bar i {
+    display: block; height: 100%; width: 100%;
+    background: var(--fg);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform .5s cubic-bezier(.16,.8,.3,1);
+  }
+  .film__bar.is-done i { transform: scaleX(1); }
+
+  .film__n { font-size: 10px; letter-spacing: .2em; color: var(--fg-3); }
+  .film__name {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(19px, 1.9vw, 27px);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--fg);
+  }
+  .film__spec { color: var(--fg-3); max-width: 34ch; }
+</style>
+
+<script>
+  // Переинициализация при переходах без перезагрузки. Событие приходит
+  // и на первой загрузке страницы, поэтому отдельный вызов не нужен —
+  // иначе обработчики навесились бы дважды.
+  let ready_init = null;
+  function init() {
+    // Повторный вызов на том же адресе пропускаем: иначе на первой
+    // загрузке обработчики навесились бы дважды.
+    if (ready_init === location.pathname) return;
+    ready_init = location.pathname;
+
+  const canvas = document.querySelector('[data-gl]');
+  const film = document.querySelector('[data-film]');
+
+  const hasWebGL = () => {
+    try {
+      const c = document.createElement('canvas');
+      return !!(window.WebGL2RenderingContext && c.getContext('webgl2'));
+    } catch (e) { return false; }
+  };
+
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // 360px покрывает почти все телефоны; ниже — только очень старые устройства,
+  // там остаётся CSS-композиция
+  const bigEnough = window.matchMedia('(min-width: 360px)').matches;
+
+  // Движок весит около 700 КБ. На экономии трафика и на медленной сети
+  // это неоправданная плата за украшение: там остаётся подложка, и
+  // первый экран выглядит ровно так же, только без движения.
+  const conn = navigator.connection || {};
+  const thrifty = conn.saveData === true ||
+                  ['slow-2g', '2g', '3g'].includes(conn.effectiveType);
+
+  if (canvas && hasWebGL() && bigEnough && !thrifty) {
+    let started = false;
+
+    const boot = async () => {
+      if (started) return;
+      started = true;
+
+      const THREE = await import('three');
+
+      const host = canvas.parentElement;
+      const size = () => ({ w: host.clientWidth || 1, h: host.clientHeight || 1 });
+
+      const renderer = new THREE.WebGLRenderer({
+        canvas, antialias: true, alpha: true, powerPreference: 'high-performance',
+      });
+      const small = window.matchMedia('(max-width: 899px)').matches;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, small ? 1.4 : 1.8));
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      // преломление считается в отдельный буфер и стоит дороже всего;
+      // половинное разрешение на глаз неотличимо, но вдвое дешевле
+      if ('transmissionResolutionScale' in renderer) renderer.transmissionResolutionScale = small ? 0.35 : 0.5;
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 60);
+
+      /* ---------- окружение ----------
+         Две светящиеся плоскости, свёрнутые в карту окружения: стеклу
+         и металлу нужно что-то отражать, а HDRI-файл тащить незачем. */
+      const envScene = new THREE.Scene();
+      const warmPlane = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.MeshBasicMaterial({ color: 0xffdcae }));
+      warmPlane.position.set(0, 0.6, -3);
+      envScene.add(warmPlane);
+      const coolPlane = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.MeshBasicMaterial({ color: 0x1a1d24 }));
+      coolPlane.position.set(0, 0, 3);
+      coolPlane.rotation.y = Math.PI;
+      envScene.add(coolPlane);
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      scene.environment = pmrem.fromScene(envScene, 0.04).texture;
+      scene.environmentIntensity = 0.55;
+      pmrem.dispose();
+
+      /* ---------- свет за окном ---------- */
+      const glowTex = (() => {
+        const c = document.createElement('canvas');
+        c.width = c.height = 256;
+        const g = c.getContext('2d');
+        const grd = g.createRadialGradient(128, 106, 8, 128, 128, 128);
+        grd.addColorStop(0, '#fff7e8');
+        grd.addColorStop(0.30, '#f7d7a8');
+        grd.addColorStop(0.66, '#a97c52');
+        grd.addColorStop(1, '#000000');
+        g.fillStyle = grd; g.fillRect(0, 0, 256, 256);
+        const t = new THREE.CanvasTexture(c);
+        t.colorSpace = THREE.SRGBColorSpace;
+        return t;
+      })();
+      const backLight = new THREE.Mesh(
+        new THREE.PlaneGeometry(11, 11),
+        new THREE.MeshBasicMaterial({ map: glowTex, transparent: true, opacity: 0.95, depthWrite: false })
+      );
+      backLight.position.set(0, 0.1, -2.3);
+      scene.add(backLight);
+
+      scene.add(new THREE.AmbientLight(0x2a2c34, 1.1));
+      const key  = new THREE.DirectionalLight(0xffd7a1, 5.2); key.position.set(-0.5, 1.2, -2.4); scene.add(key);
+      const rim  = new THREE.DirectionalLight(0xffe6c4, 1.5); rim.position.set(-2.6, 0.7, 1.4);  scene.add(rim);
+      const fill = new THREE.DirectionalLight(0x9fb4d0, 0.5); fill.position.set(2.2, -0.4, 2.6); scene.add(fill);
+
+      /* ---------- базовые материалы ---------- */
+      const baseProfile = new THREE.MeshStandardMaterial({ color: 0x14151a, roughness: 0.42, metalness: 0.12 });
+      const baseGlass = new THREE.MeshPhysicalMaterial({
+        color: 0xffffff, transmission: 1, thickness: 0.14, roughness: 0.06, ior: 1.52,
+        metalness: 0, clearcoat: 1, clearcoatRoughness: 0.08, side: THREE.DoubleSide,
+      });
+      const baseHw = new THREE.MeshStandardMaterial({ color: 0xd9cbaa, roughness: 0.24, metalness: 0.95 });
+
+      const F = 0.062;   // ширина профиля
+      const I = 0.05;    // импост
+      const D = 0.09;    // глубина
+
+      /* ---------- сборщик конфигураций ----------
+         rows задаёт деление по высоте, cols — по ширине внутри строки.
+         Одним кодом собираются и одностворчатое окно, и панорама. */
+      function build(cfg) {
+        const g = new THREE.Group();
+        const mProfile = baseProfile.clone();
+        const mGlass = baseGlass.clone();
+        const mHw = baseHw.clone();
+        [mProfile, mGlass, mHw].forEach((m) => { m.transparent = true; m.opacity = 0; });
+        g.userData.mats = [mProfile, mGlass, mHw];
+
+        const box = (w, h, d, x, y, m) => {
+          const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
+          mesh.position.set(x, y, 0);
+          g.add(mesh);
+        };
+
+        const { w: W, h: H, rows } = cfg;
+
+        // внешняя рама
+        box(F, H, D, -(W / 2 - F / 2), 0, mProfile);
+        box(F, H, D,  (W / 2 - F / 2), 0, mProfile);
+        box(W - F * 2, F, D, 0,  H / 2 - F / 2, mProfile);
+        box(W - F * 2, F, D, 0, -(H / 2 - F / 2), mProfile);
+
+        const innerW = W - F * 2, innerH = H - F * 2;
+        const totalRow = rows.reduce((s, r) => s + r.h, 0);
+
+        let yCursor = innerH / 2;
+        rows.forEach((row, ri) => {
+          const rowH = (row.h / totalRow) * innerH - (ri > 0 ? I / 2 : 0);
+          const rowTop = yCursor;
+          const rowMid = rowTop - rowH / 2;
+
+          if (ri > 0) box(innerW, I, D, 0, rowTop + I / 2, mProfile);
+
+          const totalCol = row.cols.reduce((a, b) => a + b, 0);
+          const usableW = innerW - (row.cols.length - 1) * I;
+          let xCursor = -innerW / 2;
+
+          row.cols.forEach((c, ci) => {
+            const cw = (c / totalCol) * usableW;
+            if (ci > 0) { box(I, rowH, D, xCursor + I / 2, rowMid, mProfile); xCursor += I; }
+            box(cw, rowH, 0.028, xCursor + cw / 2, rowMid, mGlass);
+            xCursor += cw;
+          });
+
+          yCursor = rowTop - rowH - I / 2;
+        });
+
+        // арочное завершение
+        if (cfg.arch) {
+          const r = W / 2;
+          const archFrame = new THREE.Mesh(new THREE.TorusGeometry(r - F / 2, F / 2, 6, 48, Math.PI), mProfile);
+          archFrame.position.y = H / 2;
+          g.add(archFrame);
+          const archGlass = new THREE.Mesh(new THREE.CircleGeometry(r - F, 40, 0, Math.PI), mGlass);
+          archGlass.position.y = H / 2;
+          g.add(archGlass);
+        }
+
+        // фурнитура
+        if (cfg.handle !== false) {
+          const hx = cfg.handleX ?? (innerW / 2 - 0.06);
+          const hy = cfg.handleY ?? (-H / 2 + 0.34);
+          const rose = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.022, 20), mHw);
+          rose.rotation.x = Math.PI / 2;
+          rose.position.set(hx, hy, D / 2 - 0.01);
+          g.add(rose);
+          const grip = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.19, 0.024), mHw);
+          grip.position.set(hx, hy - 0.1, D / 2 + 0.02);
+          g.add(grip);
+        }
+
+        g.visible = false;
+        return g;
+      }
+
+      /* ---------- шесть кадров ---------- */
+      const CONFIGS = [
+        { id: 'single', w: 0.62, h: 1.14, rows: [{ h: 1, cols: [1] }],
+          cam: { x: 0.10, y: 0.02, z: 2.55 } },
+
+        { id: 'double', w: 1.00, h: 1.32, rows: [{ h: 1, cols: [1, 1] }],
+          cam: { x: -0.18, y: 0.06, z: 3.05 } },
+
+        { id: 'triple', w: 1.62, h: 1.32, rows: [{ h: 1, cols: [1, 1, 1] }],
+          cam: { x: 0.22, y: -0.04, z: 3.80 } },
+
+        { id: 'arch', w: 0.94, h: 1.16, arch: true, rows: [{ h: 1, cols: [1, 1] }],
+          cam: { x: -0.12, y: 0.16, z: 3.20 } },
+
+        { id: 'block', w: 1.72, h: 1.46,
+          rows: [{ h: 0.42, cols: [1.35, 0.8] }, { h: 1, cols: [1.35, 0.8] }],
+          handleX: 0.52, handleY: -0.28,
+          cam: { x: 0.26, y: 0.02, z: 4.00 } },
+
+        { id: 'pano', w: 2.25, h: 1.52, rows: [{ h: 1, cols: [1, 1, 1] }],
+          handle: false,
+          cam: { x: -0.10, y: -0.06, z: 4.60 } },
+      ];
+
+      const groups = CONFIGS.map((cfg) => { const g = build(cfg); scene.add(g); return g; });
+
+      /* ---------- пылинки ---------- */
+      const COUNT = window.matchMedia('(min-width: 1000px)').matches ? 520 : (small ? 150 : 260);
+      const dpos = new Float32Array(COUNT * 3);
+      const dspd = new Float32Array(COUNT);
+      for (let i = 0; i < COUNT; i++) {
+        dpos[i * 3] = (Math.random() - 0.5) * 4.4;
+        dpos[i * 3 + 1] = (Math.random() - 0.5) * 3.2;
+        dpos[i * 3 + 2] = (Math.random() - 0.5) * 2.2 - 0.2;
+        dspd[i] = Math.random() * 0.0016 + 0.0004;
+      }
+      const dustGeo = new THREE.BufferGeometry();
+      dustGeo.setAttribute('position', new THREE.BufferAttribute(dpos, 3));
+      const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({
+        color: 0xffe6c2, size: 0.013, transparent: true, opacity: 0.6,
+        blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
+      }));
+      scene.add(dust);
+
+      /* ---------- раскладка кадра ---------- */
+      let offsetX = 0, zoomOut = 1;
+      const layout = () => {
+        const wide = window.matchMedia('(min-width: 900px)').matches;
+        offsetX = wide ? 0.55 : 0;
+        // на вертикальном экране кадр уже: отодвигаем камеру, иначе
+        // панорама и балконный блок обрезаются по краям
+        const r = size().w / Math.max(size().h, 1);
+        zoomOut = wide ? 1 : (r < 0.75 ? 1.5 : 1.22);
+        backLight.position.x = offsetX;
+        dust.position.x = offsetX * 0.5;
+      };
+
+      /* ---------- параллакс ---------- */
+      let mx = 0, my = 0, tx = 0, ty = 0;
+      const hero = canvas.closest('section') || document.body;
+      if (!reduced) {
+        hero.addEventListener('pointermove', (e) => {
+          const r = hero.getBoundingClientRect();
+          tx = ((e.clientX - r.left) / r.width - 0.5) * 2;
+          ty = ((e.clientY - r.top) / r.height - 0.5) * 2;
+        }, { passive: true });
+        hero.addEventListener('pointerleave', () => { tx = 0; ty = 0; }, { passive: true });
+      }
+
+      /* ---------- титры ---------- */
+      const shots = JSON.parse(document.querySelector('[data-shots]').textContent);
+      const filmN = document.querySelector('[data-film-n]');
+      const filmName = document.querySelector('[data-film-name]');
+      const filmSpec = document.querySelector('[data-film-spec]');
+      const bars = Array.from(document.querySelectorAll('[data-bar]'));
+
+      const setCaption = (i) => {
+        filmN.textContent = String(i + 1).padStart(2, '0') + ' / ' + String(shots.length).padStart(2, '0');
+        filmName.textContent = shots[i].n;
+        filmSpec.textContent = shots[i].spec;
+        bars.forEach((b, k) => b.classList.toggle('is-done', k <= i));
+      };
+
+      /* ---------- секвенция ----------
+         HOLD — сколько кадр стоит, TRANS — сколько длится переход.
+         Уход старой формы и сборка новой идут навстречу друг другу,
+         камера в это время проходит по дуге между двумя точками. */
+      const HOLD = 3.6, TRANS = 1.25, CYCLE = HOLD + TRANS;
+      let current = -1;
+
+      const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+      const setOpacity = (g, v) => {
+        g.visible = v > 0.002;
+        g.userData.mats.forEach((m) => { m.opacity = v; });
+      };
+
+      const resize = () => {
+        const { w, h } = size();
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        layout();
+        camera.updateProjectionMatrix();
+      };
+      resize();
+
+      let raf = 0, onScreen = true, t0 = performance.now();
+
+      const frame = (now) => {
+        const t = (now - t0) / 1000;
+        mx += (tx - mx) * 0.05;
+        my += (ty - my) * 0.05;
+
+        const p = t / CYCLE;
+        const idx = Math.floor(p) % CONFIGS.length;
+        const nextIdx = (idx + 1) % CONFIGS.length;
+        const local = (p - Math.floor(p)) * CYCLE;
+
+        if (idx !== current) { current = idx; setCaption(idx); }
+
+        // 0 пока кадр держится, 0→1 пока идёт переход
+        const k = local <= HOLD ? 0 : easeInOut((local - HOLD) / TRANS);
+
+        groups.forEach((g, i) => {
+          if (i === idx) setOpacity(g, 1 - k);
+          else if (i === nextIdx) setOpacity(g, k);
+          else setOpacity(g, 0);
+        });
+
+        const drift = Math.sin(t * 0.42) * 0.012;
+        const sway = Math.sin(t * 0.16) * 0.05 + mx * 0.14;
+
+        const a = groups[idx], b = groups[nextIdx];
+        a.position.set(offsetX - k * 0.10, drift, -k * 0.35);
+        a.rotation.y = sway - k * 0.10;
+        a.scale.setScalar(1 - k * 0.05);
+
+        b.position.set(offsetX + (1 - k) * 0.10, drift, (1 - k) * 0.35);
+        b.rotation.y = sway + (1 - k) * 0.10;
+        b.scale.setScalar(0.95 + k * 0.05);
+
+        const c1 = CONFIGS[idx].cam, c2 = CONFIGS[nextIdx].cam;
+        camera.position.set(
+          c1.x + (c2.x - c1.x) * k + offsetX * 0.42 + mx * 0.10,
+          c1.y + (c2.y - c1.y) * k - my * 0.05,
+          (c1.z + (c2.z - c1.z) * k) * zoomOut + Math.sin(k * Math.PI) * 0.22   // лёгкий отъезд на стыке
+        );
+        camera.lookAt(offsetX * 0.62, 0, 0);
+
+        backLight.material.opacity = 0.9 + Math.sin(t * 0.5) * 0.05 + Math.sin(k * Math.PI) * 0.12;
+
+        const attr = dust.geometry.attributes.position;
+        for (let i = 0; i < COUNT; i++) {
+          let y = attr.array[i * 3 + 1] + dspd[i];
+          if (y > 1.7) y = -1.7;
+          attr.array[i * 3 + 1] = y;
+          attr.array[i * 3] += Math.sin(t * 0.3 + i) * 0.00008;
+        }
+        attr.needsUpdate = true;
+
+        renderer.render(scene, camera);
+        raf = requestAnimationFrame(frame);
+      };
+
+      const start = () => { if (!raf && onScreen && !document.hidden) raf = requestAnimationFrame(frame); };
+      const stop = () => { cancelAnimationFrame(raf); raf = 0; };
+
+      if (reduced) {
+        // без движения показываем один кадр — двухстворчатое окно
+        groups.forEach((g, i) => setOpacity(g, i === 1 ? 1 : 0));
+        groups[1].position.x = offsetX;
+        const c = CONFIGS[1].cam;
+        camera.position.set(c.x + offsetX * 0.42, c.y, c.z * zoomOut);
+        camera.lookAt(offsetX * 0.62, 0, 0);
+        setCaption(1);
+        renderer.render(scene, camera);
+      } else {
+        setCaption(0);
+        renderer.render(scene, camera);
+        start();
+      }
+
+      canvas.classList.add('is-ready');
+      host.classList.add('has-gl');
+      if (film) { film.hidden = false; requestAnimationFrame(() => film.classList.add('is-ready')); }
+
+      /* Потеря контекста: холст гаснет, поэтому возвращаем CSS-композицию */
+      canvas.addEventListener('webglcontextlost', (e) => {
+        e.preventDefault(); stop();
+        canvas.classList.remove('is-ready');
+        host.classList.remove('has-gl');
+        if (film) film.hidden = true;
+      });
+      canvas.addEventListener('webglcontextrestored', () => {
+        canvas.classList.add('is-ready');
+        host.classList.add('has-gl');
+        if (film) film.hidden = false;
+        resize(); renderer.render(scene, camera);
+        if (!reduced) start();
+      });
+
+      let rt;
+      window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(resize, 160); });
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(([e]) => {
+          onScreen = e.isIntersecting;
+          if (reduced) return;
+          onScreen ? start() : stop();
+        }, { threshold: 0 }).observe(canvas);
+      }
+      document.addEventListener('visibilitychange', () => {
+        if (reduced) return;
+        document.hidden ? stop() : start();
+      });
+    };
+
+    /* Движок грузится, только когда первый экран рядом */
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        if (entries.some((e) => e.isIntersecting)) { io.disconnect(); boot(); }
+      }, { rootMargin: '200px' });
+      io.observe(canvas);
+      setTimeout(() => { if (!started) boot(); }, 1500);
+    } else {
+      boot();
+    }
+  }
+  }
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>

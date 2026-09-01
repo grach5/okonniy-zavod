@@ -1,0 +1,264 @@
+---
+/* Шрифты лежат в проекте, а не тянутся со стороннего CDN.
+   Раньше это были два соединения к доменам Google плюс блокирующий
+   запрос стилей перед первой отрисовкой. Здесь подключаются только
+   кириллица и латиница нужных начертаний, файлы уезжают в сборку и
+   отдаются с того же домена. */
+import '@fontsource-variable/playfair-display';
+import '@fontsource-variable/playfair-display/wght-italic.css';
+import '@fontsource-variable/source-serif-4';
+import '@fontsource-variable/source-serif-4/wght-italic.css';
+import '@fontsource-variable/jetbrains-mono';
+
+import playfairCyr from '@fontsource-variable/playfair-display/files/playfair-display-cyrillic-wght-normal.woff2?url';
+import serifCyr from '@fontsource-variable/source-serif-4/files/source-serif-4-cyrillic-wght-normal.woff2?url';
+
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import FloatingContact from '../components/FloatingContact.astro';
+import { site, offices } from '../data/site.js';
+import { url } from '../lib/url.js';
+
+const {
+  title,
+  description,
+  /** Путь без ведущего слеша, например 'uslugi/plastikovye-okna' */
+  path = '',
+  /** Дополнительные объекты JSON-LD для конкретной страницы */
+  schema = [],
+  /** Хлебные крошки: [{ name, href }] — последний элемент без href */
+  breadcrumbs = [],
+  noindex = false,
+  /** Превью для мессенджеров: имя файла из public/, без слеша */
+  ogImage = 'og-default.png',
+} = Astro.props;
+
+const IS_DEMO = import.meta.env.PUBLIC_DEMO === '1';
+/* Базовый адрес берём из конфигурации сборки, а не из данных компании.
+   На демонстрационном стенде жёсткий okonniyzavod.ru означал бы, что
+   разметка Schema.org заявляет чужой домен как свой идентификатор, а
+   превью для мессенджеров ведёт на файл, которого там нет. */
+const origin = String(Astro.site).replace(/\/$/, '');
+const canonical = new URL(path, Astro.site).href.replace(/\/$/, '') || site.url;
+const fullTitle = title.includes('Оконный завод') ? title : `${title} — Оконный завод`;
+
+/* ---- Микроразметка. На действующем сайте её нет вообще: ноль строк
+        Schema.org, из-за чего ни рейтинг, ни карточка организации,
+        ни цены не попадают в расширенный сниппет. ---- */
+const orgSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'LocalBusiness',
+  '@id': `${origin}/#organization`,
+  name: site.name,
+  url: origin,
+  email: site.email,
+  telephone: offices[0].phone,
+  legalName: site.legalName,
+  taxID: site.inn,
+  vatID: site.inn,
+  identifier: { '@type': 'PropertyValue', propertyID: 'ОГРН', value: site.ogrn },
+  founder: { '@type': 'Person', name: site.director },
+  image: `${origin}/og-default.png`,
+  priceRange: '₽₽',
+  foundingDate: String(site.founded),
+  areaServed: ['Владивосток', 'Артём', 'Находка', 'Вольно-Надеждинское'],
+  openingHours: site.hoursSchema,
+  sameAs: [site.social.vk, site.social.telegram],
+  address: offices.map((o) => ({
+    '@type': 'PostalAddress',
+    addressCountry: 'RU',
+    addressRegion: 'Приморский край',
+    addressLocality: o.city,
+    streetAddress: o.street,
+    postalCode: o.postal,
+  })),
+  /* Оба офиса отдельными точками: поиск показывает их как филиалы */
+  location: offices.map((o) => ({
+    '@type': 'Place',
+    name: `${site.name} — ${o.city}`,
+    address: {
+      '@type': 'PostalAddress',
+      addressCountry: 'RU',
+      addressRegion: 'Приморский край',
+      addressLocality: o.city,
+      streetAddress: o.street,
+      postalCode: o.postal,
+    },
+    geo: { '@type': 'GeoCoordinates', latitude: o.geo.lat, longitude: o.geo.lon },
+  })),
+};
+
+const breadcrumbSchema = breadcrumbs.length
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: breadcrumbs.map((b, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: b.name,
+        ...(b.href ? { item: new URL(b.href, Astro.site).href } : {}),
+      })),
+    }
+  : null;
+
+const allSchema = [orgSchema, breadcrumbSchema, ...schema].filter(Boolean);
+---
+
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Тема выставляется до первой отрисовки. Если сделать это позже,
+         страница успевает моргнуть противоположной темой — на светлом
+         фоне вспышка чёрного особенно заметна. Скрипт намеренно
+         не собирается в модуль: он должен выполниться синхронно. -->
+    <script is:inline>
+      (function () {
+        function apply() {
+          var t = 'light';
+          try {
+            // Только сохранённый выбор. Системную настройку намеренно
+            // не читаем: у большинства в Windows включена тёмная тема,
+            // и сайт открывался бы тёмным вопреки замыслу. Тёмная
+            // остаётся, но включает её человек кнопкой.
+            t = localStorage.getItem('theme') || 'light';
+          } catch (e) {}
+          document.documentElement.dataset.theme = t;
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.content = t === 'dark' ? '#0A0A0C' : '#F7F5F1';
+        }
+        apply();
+      })();
+    </script>
+
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {/* Демонстрационный стенд закрыт от индексации целиком. На нём
+        стоят реальные реквизиты завода, но расчётные цены: попав в
+        поиск, такая копия конкурировала бы с настоящим сайтом
+        компании и вводила бы её клиентов в заблуждение. */}
+    {(noindex || IS_DEMO) && (
+      <meta name="robots" content="noindex, nofollow" />
+    )}
+
+    <!-- Иконки. На действующем сайте их нет вовсе: вкладка безымянная.
+         iOS не умеет SVG в apple-touch-icon, поэтому для него отдельный PNG. -->
+    <link rel="icon" href={url('/favicon.svg')} type="image/svg+xml" />
+    <link rel="icon" href={url('/icon-32.png')} sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href={url('/apple-touch-icon.png')} sizes="180x180" />
+    <link rel="manifest" href={url('/site.webmanifest')} />
+    <meta name="theme-color" content="#F7F5F1" />
+
+    <!-- Шрифты первого экрана грузим заранее: иначе заголовок
+         перерисовывается запасной гарнитурой и кадр дёргается. -->
+    <link rel="preload" as="font" type="font/woff2" href={playfairCyr} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={serifCyr} crossorigin />
+
+    <!-- Open Graph. Главный канал компании — WhatsApp и Telegram,
+         а без этих тегов пересланная ссылка приходит серым прямоугольником -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={`${origin}/${ogImage}`} />
+    <meta property="og:image:alt" content={fullTitle} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    {allSchema.map((s) => (
+      <script type="application/ld+json" set:html={JSON.stringify(s)} />
+    ))}
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Перейти к содержанию</a>
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+    <FloatingContact />
+
+    <script>
+      // Появление блоков при прокрутке.
+      // Класс js-anim ставится только при поддержке IntersectionObserver —
+      // без него .reveal остаётся видимым, и контент не может пропасть.
+      // Событие astro:page-load приходит и на первой загрузке, и после
+      // каждого перехода без перезагрузки, поэтому вешаемся только на него:
+      // отдельный вызов навесил бы обработчики дважды.
+      let ready_initReveal = null;
+      function initReveal() {
+        // Повторный вызов на том же адресе пропускаем: иначе на первой
+        // загрузке обработчики навесились бы дважды.
+        if (ready_initReveal === location.pathname) return;
+        ready_initReveal = location.pathname;
+
+        const items = document.querySelectorAll('.reveal');
+        const canAnimate =
+          'IntersectionObserver' in window &&
+          !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (!items.length || !canAnimate) return;
+        document.documentElement.classList.add('js-anim');
+
+        const io = new IntersectionObserver(
+          (entries) => {
+            // Соседние блоки, вошедшие в кадр одновременно, показываем не
+            // разом, а с задержкой в 45 мс: волна читается как движение,
+            // одновременная вспышка — как перерисовка.
+            let step = 0;
+            entries.forEach((e) => {
+              if (!e.isIntersecting) return;
+              e.target.style.transitionDelay = step * 45 + 'ms';
+              e.target.classList.add('is-in');
+              io.unobserve(e.target);
+              step = Math.min(step + 1, 5);
+            });
+          },
+          { rootMargin: '0px 0px -8% 0px', threshold: 0.08 }
+        );
+        items.forEach((el) => io.observe(el));
+
+        // Страховка на случай, когда наблюдатель не работает. Проверяем
+        // не «пришло ли хоть одно событие», а «есть ли блок, который уже
+        // виден, но так и не показан»: на длинной странице в первый экран
+        // не попадает ни один анимируемый блок, и прежняя проверка
+        // отключала анимацию на всём документе ещё до первой прокрутки.
+        setTimeout(() => {
+          const inView = [...items].some((el) => {
+            const b = el.getBoundingClientRect();
+            return b.top < window.innerHeight && b.bottom > 0;
+          });
+          if (inView && !document.querySelector('.reveal.is-in')) {
+            document.documentElement.classList.remove('js-anim');
+          }
+        }, 3000);
+
+        // И ещё одна проверка после первой прокрутки. К трём секундам
+        // пользователь мог не тронуть страницу, и до блоков дело не дошло;
+        // если наблюдатель сломан, без этой проверки они остались бы
+        // скрытыми навсегда.
+        addEventListener(
+          'scroll',
+          () => {
+            setTimeout(() => {
+              if (!document.querySelector('.reveal.is-in')) {
+                document.documentElement.classList.remove('js-anim');
+              }
+            }, 900);
+          },
+          { once: true, passive: true }
+        );
+      }
+      initReveal();
+      document.addEventListener('astro:page-load', initReveal);
+    </script>
+  </body>
+</html>

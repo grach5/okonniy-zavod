@@ -1,0 +1,72 @@
+---
+import Base from '../layouts/Base.astro';
+import { site } from '../data/site.js';
+import { url } from '../lib/url.js';
+/* VERIFY: заготовка согласия по 152-ФЗ. Вычитать юристом перед публикацией. */
+---
+
+<Base
+  title="Согласие на обработку персональных данных"
+  description="Текст согласия на обработку персональных данных, которое пользователь даёт при отправке заявки через сайт."
+  path="soglasie"
+  noindex
+  breadcrumbs={[{ name: 'Главная', href: '/' }, { name: 'Согласие на обработку данных' }]}
+>
+  <article class="doc wrap-narrow">
+    <nav class="crumbs" aria-label="Хлебные крошки">
+      <a href={url('/')}>Главная</a><span aria-hidden="true">/</span><span aria-current="page">Согласие</span>
+    </nav>
+
+    <h1>Согласие на обработку персональных данных</h1>
+    <p class="lede">
+      Этот текст вы подтверждаете отметкой в форме заявки. Здесь он приведён
+      целиком, чтобы его можно было прочитать без спешки и сохранить.
+    </p>
+
+    <p>
+      Отмечая соответствующее поле в форме на сайте {site.url}, я свободно,
+      своей волей и в своём интересе даю согласие {site.legalName}
+      (далее — Оператор) на обработку моих персональных данных.
+    </p>
+
+    <h2>Состав данных</h2>
+    <p>Имя, номер телефона, а также сведения, которые я указал добровольно: выбранная услуга, город, удобное время визита замерщика и комментарий.</p>
+
+    <h2>Цели обработки</h2>
+    <p>Связь со мной по оставленной заявке, расчёт стоимости, согласование выезда замерщика, заключение и исполнение договора.</p>
+
+    <h2>Перечень действий</h2>
+    <p>Сбор, запись, систематизация, накопление, хранение, уточнение, извлечение, использование, блокирование, удаление и уничтожение — как с использованием средств автоматизации, так и без них.</p>
+
+    <h2>Срок действия</h2>
+    <p>Согласие действует до достижения целей обработки либо до его отзыва.</p>
+
+    <h2>Порядок отзыва</h2>
+    <p>
+      Согласие может быть отозвано в любой момент письменным обращением
+      на <a href={`mailto:${site.email}`}>{site.email}</a>. Оператор прекращает
+      обработку и уничтожает данные в срок не более 30 дней с момента получения отзыва,
+      за исключением случаев, когда обработка обязательна в силу закона.
+    </p>
+
+    <p class="doc__meta small">
+      Полные условия — в <a href={url('/politika-konfidencialnosti')}>политике конфиденциальности</a>.
+      Редакция от {new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}.
+    </p>
+  </article>
+</Base>
+
+<style>
+  .doc { padding-block: clamp(28px, 4vw, 56px) clamp(40px, 6vw, 80px); }
+  .crumbs { display: flex; gap: 9px; font-size: 13px; color: var(--fg-3); margin-bottom: clamp(24px, 4vw, 42px); }
+  .crumbs a { color: var(--fg-3); text-decoration: none; }
+  .doc h1 { font-size: clamp(28px, 4.4vw, 46px); font-weight: 400; letter-spacing: -0.035em; margin-bottom: 18px; }
+  .doc h2 {
+    font-family: var(--font-body); font-weight: 600;
+    font-size: clamp(17px, 1.9vw, 20px);
+    margin: 34px 0 10px; padding-top: 20px; border-top: 1px solid var(--rule);
+  }
+  .doc p { margin-bottom: 12px; color: var(--fg-2); font-size: 16px; line-height: 1.62; max-width: 68ch; }
+  .doc a { color: var(--accent); }
+  .doc__meta { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--rule); }
+</style>

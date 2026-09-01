@@ -1,0 +1,218 @@
+---
+import Base from '../layouts/Base.astro';
+import SectionHead from '../components/SectionHead.astro';
+import Steps from '../components/Steps.astro';
+import Reviews from '../components/Reviews.astro';
+import LeadForm from '../components/LeadForm.astro';
+import PhotoSlot from '../components/PhotoSlot.astro';
+import Faq from '../components/Faq.astro';
+import { cities } from '../data/cities.js';
+import { offices, site } from '../data/site.js';
+import { services } from '../data/services.js';
+import { url } from '../lib/url.js';
+
+/* Гео-посадочные. На действующем сайте все четыре города свалены в один
+   <title> длиной 100+ символов, отдельных страниц нет — по локальным
+   запросам сайт конкурирует сам с собой.
+   Здесь у каждого города свой климат, своя застройка и свой вопрос:
+   четыре страницы с одинаковым текстом и разным топонимом поиск
+   считает дорвеями и выбрасывает из индекса. */
+export function getStaticPaths() {
+  return cities.map((c) => ({ params: { city: c.slug }, props: { city: c } }));
+}
+
+const { city: c } = Astro.props;
+const office = offices.find((o) => o.id === c.officeId);
+const others = cities.filter((x) => x.slug !== c.slug);
+const idx = cities.findIndex((x) => x.slug === c.slug);
+
+const faq = [
+  c.localFaq,
+  {
+    q: `Выезд замерщика в ${c.nameIn} платный?`,
+    a: `Нет, замер бесплатный и ни к чему не обязывает. ${c.delivery} Замерщик приезжает в согласованное время, снимает размеры, осматривает проём и оставляет расчёт на руках.`,
+  },
+  {
+    q: `Сколько ждать окна в ${c.nameIn}?`,
+    a: 'Стандартные изделия — 5–10 рабочих дней с момента подписания договора. Производство находится в Артёме, поэтому плечо доставки короткое, а срок не зависит от поставок из других регионов.',
+  },
+];
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+};
+---
+
+<Base
+  title={`Пластиковые окна в ${c.nameIn} — Оконный завод`}
+  description={`Окна ПВХ, двери и остекление балконов в ${c.nameIn}. Собственное производство в Артёме, бесплатный замер, монтаж по ГОСТ, рассрочка 0%. Цены от ${site.priceFrom.toLocaleString('ru-RU')} ₽ за м².`}
+  path={c.slug}
+  schema={[faqSchema]}
+  breadcrumbs={[{ name: 'Главная', href: '/' }, { name: c.name }]}
+
+  ogImage="og-goroda.png"
+>
+  <section class="head">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Хлебные крошки">
+        <a href={url('/')}>Главная</a><span aria-hidden="true">/</span><span aria-current="page">{c.name}</span>
+      </nav>
+
+      <div class="head__grid">
+        <div class="head__copy">
+          <p class="eyebrow">Работаем в {c.nameIn}</p>
+          <h1 class="head__h1">Пластиковые окна в {c.nameIn}</h1>
+          <p class="lede head__lede">{c.lead}</p>
+          <div class="head__actions">
+            <a href="#zayavka" class="btn btn--lg">Бесплатный замер в {c.nameIn}</a>
+            <a href={url('/ceny#calculator')} class="btn btn--lg btn--ghost">Посчитать стоимость</a>
+          </div>
+        </div>
+
+        <div class="head__card">
+          <p class="eyebrow">Ближайший офис</p>
+          <p class="head__city">{office.city}</p>
+          <p class="body-2">{office.street}</p>
+          <a class="head__phone mono" href={`tel:${office.phoneHref}`}>{office.phone}</a>
+          <p class="small">{site.hours}</p>
+          <hr class="rule" />
+          <p class="small head__delivery">{c.delivery}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== МЕСТНЫЕ УСЛОВИЯ ====================== -->
+  <section class="section wrap">
+    <div class="area">
+      <div class="area__text">
+        <SectionHead eyebrow="Местные условия" title={c.climate.title} />
+        <p class="area__lead">{c.climate.text}</p>
+        <p class="body-2 area__p">{c.note}</p>
+        <p class="body-2 area__p">
+          Если вашего адреса нет в списке — это не значит, что мы не приедем.
+          Позвоните, и менеджер скажет точно: по большинству направлений
+          Приморья выезд замерщика бесплатный.
+        </p>
+        <a href="#zayavka" class="btn">Вызвать замерщика</a>
+      </div>
+      <PhotoSlot ratio="standard" note={`Фото объекта: остеклённый дом или квартира в ${c.nameIn}`} />
+    </div>
+  </section>
+
+  <!-- ========================= ТИПЫ ЖИЛЬЯ ========================= -->
+  <section class="section wrap">
+    <SectionHead
+      eyebrow="Что чаще всего остекляем"
+      title={`Застройка ${c.nameGen} и что она требует`}
+      lede="Одинаковых окон не бывает: панельная пятиэтажка, новостройка с панорамой и деревянный дом требуют разных решений даже в одном городе."
+      split
+    />
+    <div class="pane-grid pane-grid--3">
+      {c.housing.map((h) => (
+        <div class="hous reveal">
+          <h3 class="t-h4">{h.t}</h3>
+          <p class="body-2">{h.d}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- ============================ УСЛУГИ ============================ -->
+  <section class="section wrap">
+    <SectionHead eyebrow="Что заказывают" title={`Направления, доступные в ${c.nameIn}`} split />
+    <div class="pane-grid pane-grid--3">
+      {services.map((s) => (
+        <a class="srv" href={url(`/uslugi/${s.slug}`)}>
+          <span class="t-h4">{s.title}</span>
+          <span class="srv__price mono">от {s.priceFrom.toLocaleString('ru-RU')} {s.priceUnit}</span>
+          <span class="small srv__term">срок {s.term}</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="section wrap">
+    <SectionHead eyebrow="Как это устроено" title={`Как мы работаем в ${c.nameIn}`} split />
+    <Steps compact />
+  </section>
+
+  <section class="section wrap">
+    <SectionHead eyebrow="Отзывы" title="Что говорят клиенты" split />
+    <Reviews limit={3} offset={idx + 2} />
+  </section>
+
+  <section class="section wrap">
+    <div class="faq-layout">
+      <SectionHead eyebrow="Вопросы" title={`О работе в ${c.nameIn}`} />
+      <Faq items={faq} />
+    </div>
+  </section>
+
+  <section class="section--tight wrap">
+    <LeadForm
+      title={`Замер в ${c.nameIn} — бесплатно`}
+      lede="Оставьте номер, и мы согласуем удобное время. Замерщик приедет, снимет размеры и оставит точный расчёт."
+    />
+  </section>
+
+  <section class="section--tight wrap">
+    <SectionHead eyebrow="Ещё" title="Другие города" />
+    <div class="pane-grid pane-grid--3">
+      {others.map((o) => (
+        <a class="srv" href={url(`/${o.slug}`)}>
+          <span class="t-h4">Окна в {o.nameIn}</span>
+          <span class="small srv__term">{o.climate.title}</span>
+        </a>
+      ))}
+    </div>
+  </section>
+</Base>
+
+<style>
+  .head {
+    padding-block: clamp(20px, 3vw, 34px) clamp(38px, 6vw, 72px);
+    border-bottom: 1px solid var(--rule);
+    background: radial-gradient(70% 120% at 88% -10%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 64%);
+  }
+  .crumbs { display: flex; gap: 9px; font-size: 13px; color: var(--fg-3); margin-bottom: clamp(24px, 4vw, 46px); }
+  .crumbs a { color: var(--fg-3); text-decoration: none; }
+
+  .head__grid { display: grid; grid-template-columns: 1fr; gap: clamp(28px, 4vw, 52px); }
+  @media (min-width: 940px) { .head__grid { grid-template-columns: minmax(0, 1.4fr) minmax(270px, 1fr); align-items: start; } }
+  .head__copy { display: flex; flex-direction: column; gap: 18px; }
+  .head__h1 { font-size: clamp(32px, 5.2vw, 66px); font-weight: 400; letter-spacing: -0.035em; line-height: 1.03; max-width: 17ch; }
+  .head__lede { max-width: 56ch; }
+  .head__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
+
+  .head__card {
+    display: flex; flex-direction: column; gap: 6px;
+    background: var(--surface); border: 1px solid var(--rule);
+    border-radius: 0; padding: clamp(20px, 2.6vw, 28px);
+  }
+  .head__city { font-family: var(--font-display); font-weight: 400; font-size: 24px; letter-spacing: -0.02em; }
+  .head__phone { font-size: 19px; text-decoration: none; margin-top: 8px; }
+  .head__card .rule { margin: 14px 0 12px; }
+  .head__delivery { line-height: 1.5; }
+
+  .area { display: grid; grid-template-columns: 1fr; gap: clamp(28px, 4vw, 52px); align-items: start; }
+  @media (min-width: 900px) { .area { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); } }
+  .area__text { display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }
+  .area__lead { font-size: clamp(16.5px, 1.5vw, 19px); line-height: 1.62; color: var(--fg-2); max-width: 62ch; text-wrap: pretty; }
+  .area__p { max-width: 58ch; }
+
+  .hous { display: flex; flex-direction: column; gap: 9px; }
+
+  .srv { display: flex; flex-direction: column; gap: 7px; text-decoration: none; color: inherit; transition: background .25s; }
+  .srv:hover { background: var(--surface-2); }
+  .srv__price { font-size: 14px; color: var(--fg-2); }
+  .srv__term { line-height: 1.45; }
+
+  .faq-layout { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  @media (min-width: 940px) {
+    .faq-layout { grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.35fr); gap: 56px; align-items: start; }
+    .faq-layout > :global(.sec-head) { position: sticky; top: 100px; margin-bottom: 0; }
+  }
+</style>

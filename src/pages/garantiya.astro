@@ -1,0 +1,198 @@
+---
+import Base from '../layouts/Base.astro';
+import SectionHead from '../components/SectionHead.astro';
+import Faq from '../components/Faq.astro';
+import LeadForm from '../components/LeadForm.astro';
+import { url } from '../lib/url.js';
+
+/* VERIFY: все сроки и условия ниже — рабочая структура раздела.
+   Перед публикацией сверить с реальным договором завода. */
+
+const terms = [
+  { what: 'Профиль и сварные швы',        term: '5 лет',  note: 'Геометрия рамы, целостность сварных углов, стойкость к выцветанию' },
+  { what: 'Стеклопакет',                  term: '5 лет',  note: 'Герметичность камеры, отсутствие запотевания внутри стеклопакета' },
+  { what: 'Фурнитура',                    term: '3 года', note: 'При условии регулировки и смазки раз в год' },
+  { what: 'Монтажный шов',                term: '3 года', note: 'Промерзание, продувание, протечки по периметру примыкания' },
+  { what: 'Уплотнитель',                  term: '2 года', note: 'Эластичность и прилегание контура' },
+  { what: 'Отделочные работы',            term: '1 год',  note: 'Откосы, подоконники, отливы' },
+];
+
+const docs = [
+  { name: 'Договор подряда', note: 'Фиксирует цену, срок, комплектацию и порядок приёмки. Цена после подписания не меняется.' },
+  { name: 'Спецификация изделий', note: 'Чертёж каждой конструкции с размерами, типом открывания и комплектующими. Прикладывается к договору.' },
+  { name: 'Акт выполненных работ', note: 'Подписывается после монтажа. До подписания вы вправе указать на недостатки и не принимать работу.' },
+  { name: 'Гарантийный талон', note: 'Выдаётся на руки вместе с актом. В нём — сроки, условия и порядок обращения.' },
+  { name: 'Сертификаты на профильные системы', note: 'Документы производителей профиля и фурнитуры. Высылаем по запросу.' },
+  { name: 'Инструкция по эксплуатации', note: 'Как регулировать, смазывать и переводить фурнитуру в зимний режим.' },
+];
+
+const faq = [
+  {
+    q: 'Что делать, если после монтажа что-то пошло не так?',
+    a: 'Позвонить в офис продаж. Заявка регистрируется, и в согласованное время выезжает наш сервисный мастер. Мы не переадресуем клиента к производителю профиля или к монтажной бригаде — это одна компания, и разбираемся мы сами.',
+  },
+  {
+    q: 'Гарантия действует, если окно поставил не ваш монтажник?',
+    a: 'Гарантия на само изделие сохраняется, а на монтажный шов — нет: мы не можем отвечать за работу, которую не выполняли. Именно поэтому мы не продаём изделия «на вынос» без монтажа, если конструкция сложная.',
+  },
+  {
+    q: 'Что не является гарантийным случаем?',
+    a: 'Механические повреждения, самостоятельная переделка конструкции, повреждения при перепланировке, а также последствия отсутствия обслуживания фурнитуры. Конденсат на стекле при недостаточной вентиляции помещения — это не дефект окна, но мы подскажем, как его убрать.',
+  },
+  {
+    q: 'Нужно ли обслуживать окна и как часто?',
+    a: 'Раз в год: смазать фурнитуру, проверить прижим, перевести створки в зимний или летний режим, очистить дренажные отверстия. Это занимает 15 минут на окно. Инструкция выдаётся вместе с гарантийным талоном.',
+  },
+  {
+    q: 'Сколько ждать сервисного мастера?',
+    a: 'В рабочие дни заявка обрабатывается в день обращения, выезд согласуется на ближайшее удобное время. Срочные случаи — протечка, невозможность закрыть створку — берём в работу вне очереди.',
+  },
+];
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+};
+---
+
+<Base
+  title="Гарантия и документы"
+  description="Гарантия на окна, стеклопакеты, фурнитуру и монтаж. Какие документы вы получаете, что является гарантийным случаем и как вызвать сервисного мастера."
+  path="garantiya"
+  schema={[faqSchema]}
+  breadcrumbs={[{ name: 'Главная', href: '/' }, { name: 'Гарантия и документы' }]}
+>
+  <section class="head">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Хлебные крошки">
+        <a href={url('/')}>Главная</a><span aria-hidden="true">/</span><span aria-current="page">Гарантия</span>
+      </nav>
+      <h1 class="head__h1">Гарантия и документы</h1>
+      <p class="lede head__lede">
+        Гарантия работает только тогда, когда понятно, кто и за что отвечает.
+        Ниже — сроки по каждому элементу конструкции, полный список документов,
+        которые вы получаете на руки, и порядок действий, если что-то пошло не так.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================ СРОКИ ============================ -->
+  <section class="section wrap">
+    <SectionHead
+      eyebrow="Сроки"
+      title="На что и на сколько"
+      lede="Гарантия распространяется отдельно на изделие и отдельно на монтаж. Это важно: изделие может быть безупречным, а промерзать будет из-за шва — и наоборот."
+      split
+    />
+    <div class="scroll-x">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th scope="col">Элемент</th>
+            <th scope="col">Срок</th>
+            <th scope="col">Что покрывается</th>
+          </tr>
+        </thead>
+        <tbody>
+          {terms.map((t) => (
+            <tr>
+              <th scope="row">{t.what}</th>
+              <td class="mono tbl__term">{t.term}</td>
+              <td class="tbl__note">{t.note}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- =========================== ДОКУМЕНТЫ =========================== -->
+  <section class="section wrap">
+    <SectionHead
+      eyebrow="Документы"
+      title="Что вы получаете на руки"
+      lede="Ни один этап не проходит «на словах». Каждый документ можно унести с собой и перечитать без спешки."
+      split
+    />
+    <div class="pane-grid pane-grid--3">
+      {docs.map((d) => (
+        <div class="doc reveal">
+          <h3 class="t-h4">{d.name}</h3>
+          <p class="body-2">{d.note}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- ============================ СЕРВИС ============================ -->
+  <section class="section wrap">
+    <div class="svc">
+      <SectionHead eyebrow="Сервис" title="Если что-то пошло не так" />
+      <ol class="svc__steps">
+        <li><span class="svc__n mono">01</span><p class="body-2">Звоните в офис продаж и описываете проблему. Заявка регистрируется сразу.</p></li>
+        <li><span class="svc__n mono">02</span><p class="body-2">Менеджер уточняет детали и согласует время выезда сервисного мастера.</p></li>
+        <li><span class="svc__n mono">03</span><p class="body-2">Мастер приезжает, определяет причину и по возможности устраняет её на месте.</p></li>
+        <li><span class="svc__n mono">04</span><p class="body-2">Если нужна замена элемента — заказываем и меняем. По гарантии это бесплатно.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section wrap">
+    <div class="faq-layout">
+      <SectionHead eyebrow="Вопросы" title="О гарантии и сервисе" />
+      <Faq items={faq} />
+    </div>
+  </section>
+
+  <section class="section--tight wrap">
+    <LeadForm
+      title="Нужен сервисный мастер?"
+      lede="Оставьте номер и коротко опишите проблему в поле ниже. Менеджер перезвонит и согласует выезд."
+    />
+  </section>
+</Base>
+
+<style>
+  .head {
+    padding-block: clamp(20px, 3vw, 34px) clamp(38px, 6vw, 72px);
+    border-bottom: 1px solid var(--rule);
+    background: radial-gradient(70% 120% at 88% -10%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 64%);
+  }
+  .crumbs { display: flex; gap: 9px; font-size: 13px; color: var(--fg-3); margin-bottom: clamp(24px, 4vw, 46px); }
+  .crumbs a { color: var(--fg-3); text-decoration: none; }
+  .head__h1 { font-size: clamp(36px, 6vw, 74px); font-weight: 400; letter-spacing: -0.04em; }
+  .head__lede { max-width: 60ch; margin-top: 18px; }
+
+  .tbl { width: 100%; border-collapse: collapse; min-width: 640px; }
+  .tbl thead th {
+    text-align: left; padding: 12px 16px;
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3);
+    background: var(--surface-2); border-bottom: 1px solid var(--rule-2);
+  }
+  .tbl tbody th { text-align: left; font-weight: 500; font-size: 15px; padding: 16px; border-bottom: 1px solid var(--rule); }
+  .tbl tbody td { padding: 16px; border-bottom: 1px solid var(--rule); font-size: 14.5px; }
+  .tbl__term { color: var(--accent); font-weight: 500; white-space: nowrap; }
+  .tbl__note { color: var(--fg-2); }
+
+  .doc { display: flex; flex-direction: column; gap: 8px; }
+
+  .svc { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  @media (min-width: 940px) {
+    .svc { grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.35fr); gap: 56px; align-items: start; }
+    .svc > :global(.sec-head) { position: sticky; top: 100px; margin-bottom: 0; }
+  }
+  .svc__steps { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+  .svc__steps li {
+    display: grid; grid-template-columns: 44px 1fr; gap: 18px;
+    padding: 18px 2px; border-bottom: 1px solid var(--rule); align-items: baseline;
+  }
+  .svc__n { font-size: 12.5px; color: var(--fg-3); letter-spacing: .1em; }
+
+  .faq-layout { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  @media (min-width: 940px) {
+    .faq-layout { grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.35fr); gap: 56px; align-items: start; }
+    .faq-layout > :global(.sec-head) { position: sticky; top: 100px; margin-bottom: 0; }
+  }
+</style>

@@ -1,0 +1,13 @@
+---
+const { eyebrow, title, lede, split = false, as: Tag = 'h2' } = Astro.props;
+---
+
+<div class:list={['sec-head', split && 'sec-head--split']}>
+  <div class="sec-head__top">
+    {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+    <span class="sec-head__rule" aria-hidden="true"></span>
+  </div>
+  <Tag>{title}</Tag>
+  {lede && <p class="lede sec-head__lede">{lede}</p>}
+  <slot />
+</div>

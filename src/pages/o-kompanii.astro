@@ -1,0 +1,177 @@
+---
+import Base from '../layouts/Base.astro';
+import SectionHead from '../components/SectionHead.astro';
+import Steps from '../components/Steps.astro';
+import LeadForm from '../components/LeadForm.astro';
+import PhotoSlot from '../components/PhotoSlot.astro';
+import { site, timeline, team, advantages } from '../data/site.js';
+import { url } from '../lib/url.js';
+---
+
+<Base
+  title="О заводе: собственное производство окон в Артёме"
+  description="Оконный завод работает с 2010 года. Собственное производство ПВХ и стеклопакетов площадью 1000 м² в Артёме, отдельный цех по алюминию, более 100 сотрудников в штате."
+  path="o-kompanii"
+  breadcrumbs={[{ name: 'Главная', href: '/' }, { name: 'О заводе' }]}
+>
+  <section class="head">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Хлебные крошки">
+        <a href={url('/')}>Главная</a><span aria-hidden="true">/</span><span aria-current="page">О заводе</span>
+      </nav>
+      <h1 class="head__h1">О заводе</h1>
+      <p class="lede head__lede">
+        Мы начинали в {site.founded} году с продажи и монтажа чужих изделий.
+        Через четыре года открыли собственное производство — потому что отвечать
+        за окно, которое сделал кто-то другой, невозможно.
+      </p>
+    </div>
+  </section>
+
+  <!-- ========================== ПРОИЗВОДСТВО ========================== -->
+  <section class="section wrap">
+    <div class="prod">
+      <div class="prod__text">
+        <SectionHead eyebrow="Производство" title="Что стоит за словом «завод»" />
+        <p class="body-2 prod__p">
+          Собственное производство изделий из ПВХ и стеклопакетов работает
+          с 2014 года. Сейчас его площадь — {site.productionArea}&nbsp;м².
+          С 2022 года рядом работает отдельный цех по сборке алюминиевых конструкций.
+        </p>
+        <p class="body-2 prod__p">
+          Это означает три вещи. Первое: срок изготовления зависит от нашей загрузки,
+          а не от поставок из другого региона. Второе: нестандартную геометрию —
+          арки, трапеции, гнутый профиль — мы делаем сами, а не заказываем на стороне.
+          Третье: в гарантийном случае вам не придётся выяснять, кто виноват —
+          изготовитель, перевозчик или монтажник. Это одна компания.
+        </p>
+        <p class="body-2 prod__p">
+          Приехать и посмотреть можно в рабочие часы. Позвоните заранее,
+          чтобы вас встретили и провели по цеху.
+        </p>
+        <a href={url('/kontakty')} class="btn btn--ghost">Как доехать до производства</a>
+      </div>
+      <div class="prod__media">
+        <PhotoSlot ratio="standard" note="Фото цеха: общий план производственной линии" />
+        <PhotoSlot ratio="standard" note="Фото: участок сборки стеклопакетов" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ ЦИФРЫ ============================ -->
+  <section class="section wrap">
+    <SectionHead eyebrow="Коротко" title="Завод в четырёх цифрах" split />
+    <div class="pane-grid pane-grid--4">
+      {advantages.map((a) => (
+        <div class="fact reveal">
+          <span class="fact__n">{a.n}</span>
+          <h3 class="t-h4">{a.title}</h3>
+          <p class="body-2">{a.text}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- =========================== ИСТОРИЯ =========================== -->
+  <section class="section wrap">
+    <div class="hist">
+      <SectionHead eyebrow="История" title="Пятнадцать лет по шагам" />
+      <ol class="tl">
+        {timeline.map((t) => (
+          <li class="tl__item reveal">
+            <span class="tl__year mono">{t.year}</span>
+            <p class="body-2 tl__text">{t.text}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============================ КОМАНДА ============================ -->
+  <section class="section wrap">
+    <SectionHead
+      eyebrow="Команда"
+      title="Кто отвечает за результат"
+      lede="Замерщики, монтажники и водители — в штате. Подрядчиков со стороны мы не привлекаем: на объект приезжает наш сотрудник, за которого мы отвечаем."
+      split
+    />
+    <div class="pane-grid pane-grid--3 team">
+      {team.filter((p) => p.confirmed).map((p) => (
+        <div class="person reveal">
+          <PhotoSlot ratio="square" note={`Портрет: ${p.name}`} />
+          <div class="person__body">
+            <span class="person__name t-h4">{p.name}</span>
+            <span class="small">{p.role}</span>
+          </div>
+        </div>
+      ))}
+      {team.some((p) => !p.confirmed) && (
+        <div class="person person--pending reveal">
+          <div class="person__body">
+            <span class="person__name t-h4">Остальные — по вашим данным</span>
+            <span class="small">
+              Выводим только тех, кого удалось подтвердить документально:
+              директор указан в ЕГРЮЛ. Имена, должности и портреты
+              остальных сотрудников поставим, как только вы их пришлёте.
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <section class="section wrap">
+    <SectionHead eyebrow="Как это устроено" title="Путь заказа от звонка до монтажа" split />
+    <Steps />
+  </section>
+
+  <section class="section--tight wrap">
+    <LeadForm />
+  </section>
+</Base>
+
+<style>
+  .head {
+    padding-block: clamp(20px, 3vw, 34px) clamp(38px, 6vw, 72px);
+    border-bottom: 1px solid var(--rule);
+    background: radial-gradient(70% 120% at 88% -10%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 64%);
+  }
+  .crumbs { display: flex; gap: 9px; font-size: 13px; color: var(--fg-3); margin-bottom: clamp(24px, 4vw, 46px); }
+  .crumbs a { color: var(--fg-3); text-decoration: none; }
+  .head__h1 { font-size: clamp(38px, 6.4vw, 78px); font-weight: 400; letter-spacing: -0.04em; }
+  .head__lede { max-width: 58ch; margin-top: 18px; }
+
+  .prod { display: grid; grid-template-columns: 1fr; gap: clamp(28px, 4vw, 52px); align-items: start; }
+  @media (min-width: 940px) { .prod { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); } }
+  .prod__text { display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }
+  .prod__p { max-width: 60ch; font-size: 16px; }
+  .prod__media { display: flex; flex-direction: column; gap: 16px; }
+
+  .fact { display: flex; flex-direction: column; gap: 8px; }
+  .fact__n {
+    font-family: var(--font-display); font-weight: 400;
+    font-size: clamp(26px, 3.2vw, 38px); letter-spacing: -0.035em;
+    color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1;
+  }
+
+  .hist { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  @media (min-width: 940px) {
+    .hist { grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.4fr); gap: 56px; align-items: start; }
+    .hist > :global(.sec-head) { position: sticky; top: 100px; margin-bottom: 0; }
+  }
+  .tl { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+  .tl__item {
+    display: grid; grid-template-columns: 1fr; gap: 4px;
+    padding: 20px 2px; border-bottom: 1px solid var(--rule);
+    position: relative;
+  }
+  @media (min-width: 560px) { .tl__item { grid-template-columns: 100px 1fr; gap: 28px; } }
+  .tl__year { font-size: 16px; font-weight: 500; color: var(--fg-3); }
+  .tl__text { max-width: 62ch; }
+
+  .team :global(.photo-slot) { border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; }
+  .person--pending { display: flex; align-items: flex-end; }
+  .person--pending .person__body { max-width: 42ch; }
+  .person { padding: 0 !important; display: flex; flex-direction: column; }
+  .person__body { display: flex; flex-direction: column; gap: 3px; padding: 18px 20px 20px; }
+</style>

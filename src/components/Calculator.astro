@@ -1,0 +1,364 @@
+---
+import { BASE_M2, products, profiles, glazings, sashOptions, extras, PRICE_DISCLAIMER } from '../data/prices.js';
+---
+
+<div class="calc" id="calculator" data-calc data-base={BASE_M2}>
+  <form class="calc__controls" novalidate>
+    <fieldset class="calc__group">
+      <legend class="calc__legend">Что считаем</legend>
+      <div class="calc__tiles" role="radiogroup" aria-label="Тип изделия">
+        {products.map((p, i) => (
+          <label class="calc__tile">
+            <input type="radio" name="product" value={p.id} data-k={p.k} data-min={p.minArea} checked={i === 0} />
+            <span class="calc__tile-name">{p.label}</span>
+            <span class="calc__tile-hint">{p.hint}</span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+
+    <fieldset class="calc__group">
+      <legend class="calc__legend">Размер проёма</legend>
+      <div class="calc__dims">
+        <div class="field">
+          <label class="field__label" for="calc-w">Ширина, мм</label>
+          <input class="input" id="calc-w" name="width" type="number" inputmode="numeric"
+                 min="400" max="6000" step="10" value="1300" data-w />
+        </div>
+        <span class="calc__times" aria-hidden="true">×</span>
+        <div class="field">
+          <label class="field__label" for="calc-h">Высота, мм</label>
+          <input class="input" id="calc-h" name="height" type="number" inputmode="numeric"
+                 min="400" max="3000" step="10" value="1400" data-h />
+        </div>
+        <div class="calc__area">
+          <span class="field__label">Площадь</span>
+          <span class="calc__area-val mono" data-area>1,82 м²</span>
+        </div>
+      </div>
+      <p class="field__hint" data-min-note hidden></p>
+    </fieldset>
+
+    <fieldset class="calc__group">
+      <legend class="calc__legend">Профиль</legend>
+      <div class="calc__opts" role="radiogroup" aria-label="Профильная система">
+        {profiles.map((p, i) => (
+          <label class="calc__opt">
+            <input type="radio" name="profile" value={p.id} data-k={p.k} checked={i === 0} />
+            <span class="calc__opt-name">{p.label}</span>
+            <span class="calc__opt-note">{p.note}</span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+
+    <fieldset class="calc__group">
+      <legend class="calc__legend">Стеклопакет</legend>
+      <div class="calc__opts" role="radiogroup" aria-label="Тип стеклопакета">
+        {glazings.map((g, i) => (
+          <label class="calc__opt">
+            <input type="radio" name="glazing" value={g.id} data-k={g.k} checked={i === 1} />
+            <span class="calc__opt-name">{g.label}</span>
+            <span class="calc__opt-note">{g.note}</span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+
+    <fieldset class="calc__group">
+      <legend class="calc__legend">Открывание</legend>
+      <div class="calc__opts calc__opts--row" role="radiogroup" aria-label="Тип открывания">
+        {sashOptions.map((s, i) => (
+          <label class="calc__opt">
+            <input type="radio" name="sash" value={s.id} data-k={s.k} checked={i === 2} />
+            <span class="calc__opt-name">{s.label}</span>
+            <span class="calc__opt-note">{s.note}</span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+
+    <fieldset class="calc__group">
+      <legend class="calc__legend">Работы и комплектующие</legend>
+      <div class="calc__extras">
+        {extras.map((x) => (
+          <label class:list={['calc__extra', x.locked && 'is-locked']}>
+            <input type="checkbox" name="extra" value={x.id}
+                   data-price={x.price} data-factor={x.factor ?? ''}
+                   checked={x.on} disabled={x.locked} />
+            <span class="calc__extra-body">
+              <span class="calc__extra-name">{x.label}</span>
+              {x.note && <span class="calc__extra-note">{x.note}</span>}
+            </span>
+            <span class="calc__extra-price mono">
+              {x.factor ? x.unit : `${x.price.toLocaleString('ru-RU')} ₽`}
+            </span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  </form>
+
+  <aside class="calc__result" aria-live="polite">
+    <div class="calc__result-inner">
+      <p class="eyebrow">Предварительный расчёт</p>
+      <p class="calc__total"><span class="mono" data-total>0</span> <span class="calc__cur">₽</span></p>
+      <p class="calc__per mono" data-per></p>
+
+      <dl class="calc__break" data-breakdown></dl>
+
+      <p class="calc__disclaimer">{PRICE_DISCLAIMER}</p>
+
+      <a href="#zayavka" class="btn btn--block" data-calc-cta>Вызвать замерщика бесплатно</a>
+      <p class="calc__hand small">
+        Конфигурация уйдёт вместе с заявкой — менеджеру не придётся выспрашивать её заново.
+      </p>
+    </div>
+  </aside>
+</div>
+
+<style>
+  .calc {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 0;
+    overflow: hidden;
+  }
+  @media (min-width: 1000px) { .calc { grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr); } }
+
+  .calc__controls {
+    background: var(--surface);
+    padding: clamp(22px, 3vw, 38px);
+    display: flex; flex-direction: column; gap: 30px;
+  }
+  .calc__group { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 13px; }
+  .calc__legend {
+    font-family: var(--font-mono);
+    font-size: 11.5px; font-weight: 500; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--fg-3);
+    padding: 0;
+  }
+
+  /* --- плитки типа изделия --- */
+  .calc__tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .calc__tile {
+    position: relative; display: flex; flex-direction: column; gap: 4px;
+    padding: 15px 16px;
+    border: 1px solid var(--rule-2); border-radius: 0;
+    cursor: pointer; background: var(--surface);
+    transition: border-color .2s, background .2s;
+  }
+  .calc__tile input { position: absolute; opacity: 0; pointer-events: none; }
+  .calc__tile:hover { border-color: var(--fg-3); }
+  .calc__tile:has(input:checked) { border-color: var(--accent); background: var(--accent-dim); }
+  .calc__tile:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .calc__tile-name { font-size: 15.5px; font-weight: 600; }
+  .calc__tile-hint { font-size: 12.5px; color: var(--fg-3); line-height: 1.4; }
+
+  /* --- размеры --- */
+  .calc__dims { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: end; }
+  .calc__times { padding-bottom: 15px; color: var(--fg-3); font-size: 18px; }
+  .calc__area { display: flex; flex-direction: column; gap: 6px; grid-column: 1 / -1; padding-top: 4px; }
+  @media (min-width: 560px) {
+    .calc__dims { grid-template-columns: 1fr auto 1fr auto; }
+    .calc__area { grid-column: auto; padding-left: 18px; border-left: 1px solid var(--rule); }
+  }
+  .calc__area-val { font-size: 19px; font-weight: 500; padding-bottom: 12px; }
+
+  /* --- опции списком --- */
+  .calc__opts { display: flex; flex-direction: column; gap: 8px; }
+  .calc__opts--row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+  .calc__opt {
+    position: relative;
+    display: grid; grid-template-columns: 18px 1fr; gap: 3px 12px;
+    align-items: center;
+    padding: 13px 15px;
+    border: 1px solid var(--rule); border-radius: 0;
+    cursor: pointer; transition: border-color .2s, background .2s;
+  }
+  .calc__opt input { position: absolute; opacity: 0; pointer-events: none; }
+  .calc__opt::before {
+    content: ""; grid-row: 1 / span 2; width: 16px; height: 16px; border-radius: 50%;
+    border: 1px solid var(--rule-2); transition: border-color .2s, box-shadow .2s;
+  }
+  .calc__opt:hover { border-color: var(--rule-2); }
+  .calc__opt:has(input:checked) { border-color: var(--accent); background: var(--accent-dim); }
+  .calc__opt:has(input:checked)::before { border-color: var(--accent); box-shadow: inset 0 0 0 3.5px var(--accent); }
+  .calc__opt:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .calc__opt-name { font-size: 15px; font-weight: 500; }
+  .calc__opt-note { font-size: 12.5px; color: var(--fg-3); line-height: 1.4; }
+
+  /* --- допы --- */
+  .calc__extras { display: flex; flex-direction: column; }
+  .calc__extra {
+    display: grid; grid-template-columns: 20px 1fr auto; gap: 13px; align-items: center;
+    padding: 13px 2px; border-bottom: 1px solid var(--rule); cursor: pointer;
+  }
+  .calc__extra:first-child { border-top: 1px solid var(--rule); }
+  .calc__extra input[type="checkbox"] {
+    appearance: none; width: 20px; height: 20px; margin: 0;
+    border: 1px solid var(--rule-2); border-radius: 2px; background: var(--surface);
+    cursor: pointer; transition: background .18s, border-color .18s;
+  }
+  .calc__extra input:checked { background: var(--accent); border-color: var(--accent); }
+  .calc__extra input:checked::after {
+    content: ""; display: block; width: 5px; height: 10px; margin: 2px auto 0;
+    border: solid #0A0A0C; border-width: 0 2px 2px 0; transform: rotate(42deg);
+  }
+  .calc__extra input:disabled { opacity: .55; cursor: default; }
+  .calc__extra.is-locked { cursor: default; }
+  .calc__extra-body { display: flex; flex-direction: column; gap: 2px; }
+  .calc__extra-name { font-size: 14.5px; font-weight: 500; }
+  .calc__extra-note { font-size: 12px; color: var(--fg-3); line-height: 1.4; }
+  .calc__extra-price { font-size: 13.5px; color: var(--fg-2); white-space: nowrap; }
+
+  /* --- итог --- */
+  .calc__result { background: var(--surface-2); color: var(--fg); }
+  .calc__result-inner {
+    position: sticky; top: 88px;
+    padding: clamp(24px, 3vw, 34px);
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .calc__result .eyebrow { color: var(--accent); }
+  .calc__total {
+    font-family: var(--font-display); font-weight: 400;
+    font-size: clamp(36px, 4.4vw, 52px); line-height: 1;
+    letter-spacing: -0.03em; color: var(--fg);
+    font-variant-numeric: tabular-nums;
+  }
+  .calc__cur { color: var(--fg-3); }
+  .calc__per { font-size: 13px; color: color-mix(in srgb, var(--fg) 68%, transparent); }
+
+  .calc__break { margin: 14px 0 4px; display: flex; flex-direction: column; gap: 8px;
+                 border-top: 1px solid color-mix(in srgb, var(--fg) 16%, transparent); padding-top: 16px; }
+  .calc__break-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+  .calc__break dt { font-size: 13.5px; color: color-mix(in srgb, var(--fg) 62%, transparent); }
+  .calc__break dd {
+    margin: 0; font-family: var(--font-mono); font-size: 13.5px;
+    color: var(--fg); font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+
+  .calc__disclaimer {
+    font-size: 12.5px; line-height: 1.5;
+    color: color-mix(in srgb, var(--fg) 68%, transparent);
+    padding: 12px 14px; margin-top: 6px;
+    border-left: 2px solid var(--accent);
+    background: color-mix(in srgb, var(--fg) 5%, transparent);
+  }
+  .calc__result .btn { margin-top: 8px; }
+  .calc__hand { color: color-mix(in srgb, var(--fg) 62%, transparent); }
+</style>
+
+<script>
+  // Переинициализация при переходах без перезагрузки. Событие приходит
+  // и на первой загрузке страницы, поэтому отдельный вызов не нужен —
+  // иначе обработчики навесились бы дважды.
+  let ready_init = null;
+  function init() {
+    // Повторный вызов на том же адресе пропускаем: иначе на первой
+    // загрузке обработчики навесились бы дважды.
+    if (ready_init === location.pathname) return;
+    ready_init = location.pathname;
+
+  const root = document.querySelector('[data-calc]');
+  if (root) {
+    const BASE = Number(root.dataset.base);
+    const form = root.querySelector('.calc__controls');
+    const wEl = root.querySelector('[data-w]');
+    const hEl = root.querySelector('[data-h]');
+    const areaEl = root.querySelector('[data-area]');
+    const minNote = root.querySelector('[data-min-note]');
+    const totalEl = root.querySelector('[data-total]');
+    const perEl = root.querySelector('[data-per]');
+    const breakEl = root.querySelector('[data-breakdown]');
+    const cta = root.querySelector('[data-calc-cta]');
+
+    const rub = (n) => Math.round(n).toLocaleString('ru-RU');
+    const checked = (name) => form.querySelector(`input[name="${name}"]:checked`);
+
+    function calc() {
+      const product = checked('product');
+      const profile = checked('profile');
+      const glazing = checked('glazing');
+      const sash = checked('sash');
+
+      const w = Math.min(Math.max(Number(wEl.value) || 0, 400), 6000);
+      const h = Math.min(Math.max(Number(hEl.value) || 0, 400), 3000);
+      const rawArea = (w * h) / 1_000_000;
+      const minArea = Number(product.dataset.min);
+      const area = Math.max(rawArea, minArea);
+
+      areaEl.textContent = rawArea.toFixed(2).replace('.', ',') + ' м²';
+      if (rawArea < minArea) {
+        minNote.hidden = false;
+        minNote.textContent = `Минимальный расчётный размер для этого типа — ${minArea.toString().replace('.', ',')} м². Считаем по минимуму.`;
+      } else {
+        minNote.hidden = true;
+      }
+
+      let unit = BASE * Number(product.dataset.k) * Number(profile.dataset.k)
+               * Number(glazing.dataset.k) * Number(sash.dataset.k);
+
+      let product_ = unit * area;
+      let works = 0;
+      const lines = [];
+
+      root.querySelectorAll('input[name="extra"]').forEach((x) => {
+        if (!x.checked) return;
+        if (x.dataset.factor) {
+          const f = Number(x.dataset.factor);
+          const add = product_ * (f - 1);
+          product_ += add;
+          lines.push([x.closest('.calc__extra').querySelector('.calc__extra-name').textContent, add]);
+        } else {
+          const p = Number(x.dataset.price);
+          works += p;
+          lines.push([x.closest('.calc__extra').querySelector('.calc__extra-name').textContent, p]);
+        }
+      });
+
+      const total = product_ + works;
+
+      totalEl.textContent = rub(total);
+      perEl.textContent = `${rub(product_ / area)} ₽ за м² изделия · срок 5–10 рабочих дней`;
+
+      breakEl.innerHTML =
+        `<div class="calc__break-row"><dt>Изделие, ${area.toFixed(2).replace('.', ',')} м²</dt><dd>${rub(product_ - lines.filter(l => l[0].includes('Ламинация')).reduce((s, l) => s + l[1], 0))} ₽</dd></div>` +
+        lines.map(([n, v]) => `<div class="calc__break-row"><dt>${n}</dt><dd>${rub(v)} ₽</dd></div>`).join('');
+
+      const cfg = new URLSearchParams({
+        p: product.value, pr: profile.value, g: glazing.value, s: sash.value,
+        w: String(w), h: String(h), sum: String(Math.round(total)),
+      });
+      cta.href = '#zayavka';
+      cta.dataset.config = cfg.toString();
+    }
+
+    form.addEventListener('input', calc);
+    form.addEventListener('change', calc);
+    calc();
+
+    /* Конфигурация переносится в заявку — на действующем сайте
+       результат калькулятора просто показывался на экране и терялся. */
+    cta.addEventListener('click', () => {
+      const note = document.querySelector('#zayavka textarea[name="note"]');
+      const product = checked('product').closest('.calc__tile').querySelector('.calc__tile-name').textContent;
+      const profile = checked('profile').closest('.calc__opt').querySelector('.calc__opt-name').textContent;
+      const glazing = checked('glazing').closest('.calc__opt').querySelector('.calc__opt-name').textContent;
+      const sash = checked('sash').closest('.calc__opt').querySelector('.calc__opt-name').textContent;
+      const line = `Расчёт с сайта: ${product}, ${wEl.value}×${hEl.value} мм, ${profile}, ${glazing}, ${sash}. Предварительно ${totalEl.textContent} ₽.`;
+      if (note && !note.value.includes('Расчёт с сайта')) {
+        note.value = note.value ? note.value + '\n' + line : line;
+      }
+      if (typeof window.ym === 'function' && window.YM_ID) {
+        window.ym(window.YM_ID, 'reachGoal', 'calc_to_lead');
+      }
+    });
+  }
+  }
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>

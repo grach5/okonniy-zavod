@@ -1,0 +1,242 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import SectionHead from '../components/SectionHead.astro';
+import Calculator from '../components/Calculator.astro';
+import Steps from '../components/Steps.astro';
+import WindowBuild from '../components/WindowBuild.astro';
+import ServiceShowcase from '../components/ServiceShowcase.astro';
+import Reviews from '../components/Reviews.astro';
+import Faq from '../components/Faq.astro';
+import LeadForm from '../components/LeadForm.astro';
+import PhotoSlot from '../components/PhotoSlot.astro';
+import Visuals from '../components/Visuals.astro';
+import { services } from '../data/services.js';
+import { advantages, cities, site } from '../data/site.js';
+import { url } from '../lib/url.js';
+
+const faq = [
+  {
+    q: 'Вы действительно завод или перепродаёте чужие изделия?',
+    a: 'Производство работает с 2014 года и находится в Артёме: цех ПВХ и стеклопакетов площадью 1000 м², с 2022 года — отдельный цех по алюминию. Приехать и посмотреть можно в рабочие часы, для этого достаточно позвонить заранее.',
+  },
+  {
+    q: 'Сколько ждать окна?',
+    a: 'Стандартные изделия — 5–10 рабочих дней с момента подписания договора. Нестандартная геометрия, ламинация и панорамные конструкции — от 15 дней. Срок фиксируется в договоре, а не называется устно.',
+  },
+  {
+    q: 'Замер точно бесплатный?',
+    a: 'Да, и он ни к чему не обязывает. Замерщик приезжает, снимает размеры, осматривает проём и оставляет расчёт. Решение вы принимаете после, без давления и без «цена действует только сегодня».',
+  },
+  {
+    q: 'Что с гарантией?',
+    a: 'Гарантия распространяется отдельно на изделие и отдельно на монтаж. Сервисная служба своя — по гарантийному случаю выезжает наш мастер, а не сторонний подрядчик. Подробности на странице «Гарантия и документы».',
+  },
+  {
+    q: 'Работаете ли вы с юридическими лицами?',
+    a: 'Да. Отдел по работе с корпоративными клиентами работает с 2014 года: договор, счёт, закрывающие документы, поэтапная сдача объекта. Это отдельное направление, а не «то же самое, только с бумагами».',
+  },
+  {
+    q: 'Можно ли в рассрочку?',
+    a: 'Да, рассрочка 0% без переплаты. Условия и срок обсуждаются на этапе договора — они зависят от суммы заказа.',
+  },
+];
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faq.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
+---
+
+<Base
+  title="Пластиковые окна от производителя во Владивостоке"
+  description="Свой цех окон ПВХ и алюминия в Артёме. Остекление квартир, домов и балконов в Приморье. Бесплатный замер, монтаж по ГОСТ 30971, рассрочка 0%."
+  path=""
+  schema={[faqSchema]}
+>
+  <Hero />
+
+  <!-- ============================ УСЛУГИ ============================ -->
+  <section class="section wrap">
+    <SectionHead
+      eyebrow="Что мы делаем"
+      title="Шесть направлений, каждое со своим расчётом"
+      lede="Балкон, панорама и входная группа считаются по-разному — общий прайс за квадратный метр здесь только вводит в заблуждение. У каждого направления своя страница с ценой, характеристиками и ответами на вопросы."
+      split
+    />
+
+    <ServiceShowcase />
+  </section>
+
+  <!-- ===================== СБОРКА ОКНА ===================== -->
+  <section class="section--tight wrap">
+    <SectionHead
+      eyebrow="Как это сделано"
+      title="Шесть слоёв, за которые вы платите"
+      lede="Окно выглядит как одна вещь, а состоит из шести решений, принятых до того, как его привезли. Прокрутите — и оно соберётся так же, как проходит наш цех."
+      split
+    />
+  </section>
+  <WindowBuild />
+
+  <!-- ====================== ВИЗУАЛИЗАЦИИ ====================== -->
+  <Visuals />
+
+  <!-- ========================== ВРЕЗКА ========================== -->
+  <section class="section--tight wrap">
+    <blockquote class="pull">
+      Хорошее окно, поставленное на монтажную пену без пароизоляции, промерзает
+      ровно так же, как плохое. Разница появляется не в прайсе, а в монтажном шве.
+      <cite>Оконный завод · позиция по монтажу</cite>
+    </blockquote>
+  </section>
+
+  <!-- ======================= ПОЧЕМУ ЗАВОД ======================= -->
+  <section class="section wrap">
+    <div class="why">
+      <div class="why__copy">
+        <SectionHead
+          eyebrow="Завод, а не посредник"
+          title="Разница видна не в рекламе, а в гарантийном случае"
+          lede="Посредник в спорной ситуации отправляет вас к заводу-изготовителю, завод — к монтажникам, монтажники — обратно к продавцу. Когда производство, доставка и монтаж принадлежат одной компании, этот круг размыкается."
+        />
+        <div class="why__intro columns-2">
+          <p class="drop-cap">Завод отличается от посредника не вывеской, а тем, что происходит,
+          когда через год окно начинает продувать. У посредника в этот момент появляется
+          три стороны: изготовитель профиля, монтажная бригада на подряде и сам продавец.
+          Каждая указывает на соседнюю.</p>
+          <p>У нас в этой цепочке одно юридическое лицо. Профиль сварен в Артёме, привезён
+          нашим транспортом, поставлен нашей бригадой, и по гарантийному случаю приедет
+          наш мастер. Это не маркетинговое преимущество, а способ не превращать спор
+          в переписку между тремя подрядчиками.</p>
+        </div>
+
+        <dl class="why__list">
+          {advantages.map((a) => (
+            <div class="why__row reveal">
+              <dt class="why__n">{a.n}</dt>
+              <dd class="why__body">
+                <span class="why__title">{a.title}</span>
+                <span class="body-2">{a.text}</span>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+      <div class="why__media">
+        <PhotoSlot ratio="tall" note="Фото цеха: линия сварки ПВХ-профиля, вертикальный кадр" />
+        <PhotoSlot ratio="square" note="Фото: бригада на монтаже объекта" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= КАЛЬКУЛЯТОР ========================= -->
+  <section class="section wrap">
+    <SectionHead
+      eyebrow="Расчёт"
+      title="Посчитайте сами, без звонка"
+      lede="Калькулятор считает по той же модели, что и менеджер: профиль, стеклопакет, тип открывания и работы. Конфигурация переносится в заявку целиком, поэтому повторно её выспрашивать никто не будет."
+      split
+    />
+    <Calculator />
+  </section>
+
+  <!-- ========================== ЭТАПЫ ========================== -->
+  <section class="section wrap">
+    <SectionHead
+      eyebrow="Как это устроено"
+      title="От заявки до вывоза мусора"
+      lede="Шесть шагов, каждый из которых закреплён за конкретным сотрудником нашей компании. Подрядчиков со стороны на этом пути нет."
+      split
+    />
+    <Steps />
+  </section>
+
+  <!-- ========================== ОТЗЫВЫ ========================== -->
+  <section class="section wrap">
+    <SectionHead
+      eyebrow="Отзывы"
+      title="Что говорят те, кто уже поменял окна"
+      lede="Тексты взяты с независимых площадок — 2ГИС, Яндекс.Карт и VL.RU. Там же их можно проверить целиком, вместе с рейтингом и датами."
+      split
+    />
+    <Reviews />
+  </section>
+
+  <!-- ========================== ГОРОДА ========================== -->
+  <section class="section wrap">
+    <SectionHead
+      eyebrow="География"
+      title="Четыре города, разные условия"
+      lede="Владивосток, Артём, Находка и Вольно-Надеждинское отличаются ветровой нагрузкой, влажностью и типом застройки. Это влияет на подбор профиля и фурнитуры — поэтому у каждого города своя страница."
+      split
+    />
+    <div class="pane-grid pane-grid--4">
+      {cities.map((c) => (
+        <a class="geo reveal" href={url(`/${c.slug}`)}>
+          <h3 class="t-h4">{c.name}</h3>
+          <p class="body-2 geo__text">{c.lead}</p>
+          <span class="geo__link small">Условия в {c.nameIn} →</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- =========================== ВОПРОСЫ =========================== -->
+  <section class="section wrap">
+    <div class="faq-layout">
+      <SectionHead eyebrow="Вопросы" title="Что спрашивают чаще всего" />
+      <Faq items={faq} />
+    </div>
+  </section>
+
+  <!-- =========================== ЗАЯВКА =========================== -->
+  <section class="section--tight wrap">
+    <LeadForm />
+  </section>
+</Base>
+
+<style>
+  .why__intro { margin-bottom: clamp(28px, 3.4vw, 44px); }
+  .why__intro p { font-size: 16.5px; line-height: 1.68; color: var(--fg-2); }
+
+  /* --- почему завод --- */
+  .why { display: grid; grid-template-columns: 1fr; gap: clamp(32px, 5vw, 64px); }
+  @media (min-width: 1000px) { .why { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); } }
+
+  .why__list { display: flex; flex-direction: column; margin: 0; }
+  .why__row {
+    display: grid; grid-template-columns: 1fr; gap: 6px;
+    padding: 22px 0; border-top: 1px solid var(--rule);
+  }
+  @media (min-width: 560px) { .why__row { grid-template-columns: 150px 1fr; gap: 24px; } }
+  .why__n {
+    font-family: var(--font-display); font-weight: 400;
+    font-size: clamp(22px, 2.6vw, 30px); letter-spacing: -0.03em;
+    color: var(--fg); font-variant-numeric: tabular-nums;
+  }
+  .why__body { margin: 0; display: flex; flex-direction: column; gap: 5px; }
+  .why__title { font-size: 16.5px; font-weight: 600; }
+
+  .why__media { display: flex; flex-direction: column; gap: 16px; }
+  @media (max-width: 999px) { .why__media { flex-direction: row; } .why__media > * { flex: 1; } }
+  @media (max-width: 560px) { .why__media { flex-direction: column; } }
+
+  /* --- города --- */
+  .geo { display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: inherit; transition: background .25s; }
+  .geo:hover { background: var(--surface-2); }
+  .geo__text { flex: 1; font-size: 14.5px; }
+  .geo__link { color: var(--fg-3); font-weight: 500; }
+
+  /* --- вопросы --- */
+  .faq-layout { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  @media (min-width: 940px) {
+    .faq-layout { grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.35fr); gap: 56px; align-items: start; }
+    .faq-layout > :global(.sec-head) { position: sticky; top: 100px; margin-bottom: 0; }
+  }
+</style>

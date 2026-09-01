@@ -1,0 +1,74 @@
+---
+import { steps } from '../data/site.js';
+
+/* compact — короткая версия без описаний. Ставится на внутренних
+   страницах, чтобы одни и те же 200 слов не дублировались 19 раз. */
+const { compact = false } = Astro.props;
+---
+
+<ol class:list={['steps', compact && 'steps--compact']}>
+  {steps.map((s) => (
+    <li class="steps__item reveal">
+      <span class="steps__n mono">{String(s.n).padStart(2, '0')}</span>
+      <h3 class="t-h4 steps__title">{s.title}</h3>
+      {!compact && <p class="body-2">{s.text}</p>}
+    </li>
+  ))}
+</ol>
+
+<style>
+  /* Нумерация здесь несёт смысл: это реальная последовательность
+     от заявки до монтажа, порядок шагов важен для читателя. */
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 0;
+    overflow: hidden;
+    counter-reset: step;
+  }
+  @media (min-width: 640px)  { .steps { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1000px) { .steps { grid-template-columns: repeat(3, 1fr); } }
+
+  .steps__item {
+    /* Ячейка сетки по умолчанию не уже своего содержимого, поэтому
+       длинное слово раздвигает колонку, а внешний overflow: hidden
+       срезает её без возможности прокрутить. На узких экранах так
+       терялась часть текста. */
+    min-width: 0;
+    overflow-wrap: anywhere;
+    background: var(--surface);
+    padding: clamp(22px, 2.6vw, 32px);
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    position: relative;
+  }
+  .steps__item::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 2px;
+    background: var(--accent);
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform .5s cubic-bezier(.2,.7,.3,1);
+  }
+  .steps__item.is-in::before { transform: scaleY(1); }
+  .steps__n { font-size: 12.5px; color: var(--fg-3); letter-spacing: .1em; }
+  .steps__title { margin-top: 2px; }
+</style>
+
+<style>
+  /* до 420 px две колонки этапов не помещаются: остаётся одна */
+  .steps--compact { grid-template-columns: 1fr; }
+  @media (min-width: 420px)  { .steps--compact { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 700px)  { .steps--compact { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 1040px) { .steps--compact { grid-template-columns: repeat(6, 1fr); } }
+  .steps--compact .steps__item { padding: 20px 18px; gap: 6px; }
+  .steps--compact .steps__title { font-size: 15.5px; }
+</style>

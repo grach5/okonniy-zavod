@@ -1,0 +1,42 @@
+---
+/* Аккордеон на <details> — работает без JavaScript,
+   доступен с клавиатуры и корректно читается скринридером. */
+const { items } = Astro.props;
+---
+
+<div class="faq">
+  {items.map((item, i) => (
+    <details class="faq__item" name="faq" open={i === 0}>
+      <summary class="faq__q">
+        <span>{item.q}</span>
+        <svg class="faq__icon" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M7 1.6v10.8M1.6 7h10.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+      </summary>
+      <div class="faq__a"><p class="body-2">{item.a}</p></div>
+    </details>
+  ))}
+</div>
+
+<style>
+  .faq { border-top: 1px solid var(--rule); }
+  .faq__item { border-bottom: 1px solid var(--rule); }
+  .faq__q {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 24px;
+    padding: 22px 2px;
+    cursor: pointer;
+    list-style: none;
+    font-family: var(--font-body);
+    font-size: clamp(16px, 1.8vw, 18.5px);
+    font-weight: 600;
+    line-height: 1.4;
+    text-wrap: balance;
+  }
+  .faq__q::-webkit-details-marker { display: none; }
+  .faq__q:hover { color: var(--accent); }
+  .faq__icon { flex: none; margin-top: 6px; color: var(--fg-3); transition: transform .28s cubic-bezier(.2,.7,.3,1); }
+  .faq__item[open] .faq__icon { transform: rotate(135deg); }
+  .faq__a { padding: 0 2px 24px; max-width: 74ch; }
+  .faq__item[open] .faq__a { animation: faqIn .3s cubic-bezier(.2,.7,.3,1); }
+  @keyframes faqIn { from { opacity: 0; transform: translateY(-6px); } }
+</style>

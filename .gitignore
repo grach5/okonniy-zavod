@@ -1,0 +1,24 @@
+node_modules/
+dist/
+.astro/
+.DS_Store
+*.log
+
+# Исходники визуализаций — около 800 МБ: панорамы 8K, фотосканы
+# материалов, модели мебели и просчитанные кадры. Всё это скачивается
+# заново скриптом render/assets/dl_walk.py, поэтому в репозитории
+# держим только сами скрипты, а не их сырьё.
+render/assets/
+render/out/
+render/walk/
+render/walkboard/
+render/hero/
+render/hero2/
+render/board/
+render/test-out/
+render/video/
+render/hdritest/
+render/_*.py
+
+# Готовые кадры визуализаций, которые участвуют в сборке сайта,
+# наоборот, нужны: они лежат в src/assets/vis и версионируются.

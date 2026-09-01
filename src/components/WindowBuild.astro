@@ -1,0 +1,333 @@
+---
+/* Сборка окна по мере прокрутки: от пустого проёма до света в комнате.
+   Пять слоёв включаются по очереди — это буквально порядок, в котором
+   изделие проходит наш цех, и одновременно ответ на вопрос
+   «за что здесь деньги». */
+
+const stages = [
+  {
+    n: 'Проём',
+    title: 'Начинается не с окна',
+    text: 'Замерщик снимает размеры и смотрит на состояние проёма: геометрию, глубину четверти, состояние откосов. Половина жалоб на «плохие окна» рождается здесь, ещё до заказа.',
+    spec: 'Замер бесплатный',
+  },
+  {
+    n: 'Рама',
+    title: 'Профиль и армирование',
+    text: 'Свариваем раму на своей линии и вставляем стальной вкладыш. Его сечение подбирается под площадь створки и ветровую нагрузку — для наветренной стороны Владивостока оно другое, чем для двора в Артёме.',
+    spec: '60–70 мм · 3–5 камер',
+  },
+  {
+    n: 'Переплёт',
+    title: 'Импост и деление на створки',
+    text: 'Деление проёма решает, как окно будет открываться и мыться. Глухая створка дешевле, но выше первого этажа её не вымыть снаружи. Это обсуждается до производства, а не после.',
+    spec: 'Глухая · поворотная · поворотно-откидная',
+  },
+  {
+    n: 'Стеклопакет',
+    title: 'То, за что платят на самом деле',
+    text: 'Стекло — это 80% площади окна и почти все его теплопотери. Северная комната получает И-стекло, окно на трассу — пакет с разной толщиной стёкол, южная сторона — мультифункциональное от перегрева.',
+    spec: 'Собственный цех стеклопакетов',
+  },
+  {
+    n: 'Фурнитура',
+    title: 'Единственное, что изнашивается',
+    text: 'Профиль живёт 40–60 лет, стеклопакет — 20. Реальный срок службы окна определяет фурнитура: с регулировкой раз в год она ходит 15–20 лет, без обслуживания — вдвое меньше.',
+    spec: 'Микропроветривание · зимний режим',
+  },
+  {
+    n: 'Монтаж',
+    title: 'Шов, а не пена',
+    text: 'Трёхслойный шов по ГОСТ 30971: внутри пароизоляция, в середине пена, снаружи паропроницаемая лента. Пена, оставленная открытой, набирает влагу и перестаёт греть за два сезона.',
+    spec: 'ГОСТ 30971 · своя бригада',
+  },
+];
+---
+
+<section class="build on-dark" data-build>
+  <div class="wrap build__wrap">
+    <!-- Липкая сцена: окно собирается слой за слоем -->
+    <div class="build__stage">
+      <div class="build__scene" data-scene data-stage="0">
+        <div class="build__glow" aria-hidden="true"></div>
+
+        <div class="build__window" aria-hidden="true">
+          <span class="build__opening"></span>
+          <span class="build__frame"></span>
+          <span class="build__impost build__impost--v"></span>
+          <span class="build__impost build__impost--h"></span>
+          <span class="build__panes">
+            <i></i><i></i><i></i><i></i>
+          </span>
+          <span class="build__handle"></span>
+          <span class="build__seam"></span>
+        </div>
+
+        <p class="build__counter mono" data-counter>01 / 06</p>
+        <p class="build__spec label" data-spec>Замер бесплатный</p>
+      </div>
+    </div>
+
+    <!-- Текст, прокручивающийся мимо -->
+    <ol class="build__steps">
+      {stages.map((s, i) => (
+        <li class="build__step" data-step={i}>
+          <span class="build__step-n label">{String(i + 1).padStart(2, '0')} — {s.n}</span>
+          <h3 class="build__step-title">{s.title}</h3>
+          <p class="body-2">{s.text}</p>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>
+
+<style>
+  .build {
+    position: relative;
+    padding-block: clamp(56px, 8vw, 110px);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    background: linear-gradient(180deg, var(--bg), #08080A 50%, var(--bg));
+  }
+
+  .build__wrap { display: grid; grid-template-columns: 1fr; gap: 40px; }
+  @media (min-width: 940px) {
+    .build__wrap { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(40px, 6vw, 100px); }
+  }
+
+  /* ---------------- сцена ---------------- */
+
+  .build__stage { position: relative; }
+  @media (min-width: 940px) {
+    .build__stage { position: sticky; top: 96px; height: min(74vh, 660px); }
+  }
+
+  .build__scene {
+    position: relative;
+    height: 100%;
+    min-height: 340px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--rule);
+    border-radius: 0;
+    background: radial-gradient(80% 60% at 50% 46%, #101013, #08080A 72%);
+    overflow: hidden;
+  }
+
+  .build__glow {
+    position: absolute; inset: 0;
+    background: radial-gradient(46% 40% at 50% 46%, var(--accent-glow), transparent 72%);
+    opacity: 0;
+    transition: opacity 1.1s cubic-bezier(.16,.8,.3,1);
+  }
+
+  .build__window {
+    position: relative;
+    width: clamp(170px, 46%, 260px);
+    aspect-ratio: 3 / 4;
+  }
+
+  /* 0 — пустой проём: только контур */
+  .build__opening {
+    position: absolute; inset: 0;
+    border: 1px dashed var(--rule-2);
+    border-radius: 2px;
+    transition: opacity .8s;
+  }
+
+  /* 1 — рама */
+  .build__frame {
+    position: absolute; inset: 0;
+    border: 8px solid #1B1B1F;
+    border-radius: 2px;
+    box-shadow: inset 0 0 0 1px rgb(var(--fg-rgb) / .14), 0 0 0 1px rgb(var(--fg-rgb) / .08);
+    opacity: 0;
+    transform: scale(.94);
+    transition: opacity .8s cubic-bezier(.16,.8,.3,1), transform .8s cubic-bezier(.16,.8,.3,1);
+  }
+
+  /* 2 — импост */
+  .build__impost {
+    position: absolute; background: #1B1B1F;
+    opacity: 0; transition: opacity .7s .1s, transform .7s .1s;
+  }
+  .build__impost--v { top: 8px; bottom: 8px; left: 50%; width: 8px; transform: translateX(-50%) scaleY(0); transform-origin: top; }
+  .build__impost--h { left: 8px; right: 8px; top: 54%; height: 8px; transform: translateY(-50%) scaleX(0); transform-origin: left; }
+
+  /* 3 — стеклопакет */
+  .build__panes {
+    position: absolute; inset: 8px;
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1.2fr 1fr;
+    gap: 8px;
+  }
+  .build__panes i {
+    display: block; border-radius: 1px;
+    background: linear-gradient(168deg, rgba(255,238,210,.9), rgb(var(--accent-rgb) / .55) 46%, rgb(var(--accent-rgb) / .2));
+    opacity: 0;
+    transform: scale(.9);
+    transition: opacity .7s cubic-bezier(.16,.8,.3,1), transform .7s cubic-bezier(.16,.8,.3,1), box-shadow .9s;
+  }
+  .build__panes i:nth-child(2) { transition-delay: .07s; }
+  .build__panes i:nth-child(3) { transition-delay: .14s; }
+  .build__panes i:nth-child(4) { transition-delay: .21s; }
+
+  /* 4 — фурнитура */
+  .build__handle {
+    position: absolute; right: 13px; top: 63%;
+    width: 5px; height: 34px; border-radius: 3px;
+    background: linear-gradient(180deg, #A79E88, #4E4B42);
+    opacity: 0; transform: translateX(6px);
+    transition: opacity .6s, transform .6s;
+  }
+
+  /* 5 — монтажный шов */
+  .build__seam {
+    position: absolute; inset: -13px;
+    border: 5px solid transparent;
+    border-radius: 4px;
+    background:
+      linear-gradient(#08080A, #08080A) padding-box,
+      repeating-linear-gradient(135deg, var(--accent) 0 5px, transparent 5px 11px) border-box;
+    opacity: 0;
+    transition: opacity .8s;
+  }
+
+  /* ---- состояния ---- */
+  .build__scene[data-stage="0"] .build__opening { opacity: 1; }
+  .build__scene:not([data-stage="0"]) .build__opening { opacity: 0; }
+
+  .build__scene:not([data-stage="0"]) .build__frame { opacity: 1; transform: scale(1); }
+
+  .build__scene[data-stage="2"] .build__impost,
+  .build__scene[data-stage="3"] .build__impost,
+  .build__scene[data-stage="4"] .build__impost,
+  .build__scene[data-stage="5"] .build__impost { opacity: 1; }
+  .build__scene[data-stage="2"] .build__impost--v,
+  .build__scene[data-stage="3"] .build__impost--v,
+  .build__scene[data-stage="4"] .build__impost--v,
+  .build__scene[data-stage="5"] .build__impost--v { transform: translateX(-50%) scaleY(1); }
+  .build__scene[data-stage="2"] .build__impost--h,
+  .build__scene[data-stage="3"] .build__impost--h,
+  .build__scene[data-stage="4"] .build__impost--h,
+  .build__scene[data-stage="5"] .build__impost--h { transform: translateY(-50%) scaleX(1); }
+
+  .build__scene[data-stage="3"] .build__panes i,
+  .build__scene[data-stage="4"] .build__panes i,
+  .build__scene[data-stage="5"] .build__panes i {
+    opacity: 1; transform: scale(1);
+    box-shadow: 0 0 26px 4px rgb(var(--accent-rgb) / .26);
+  }
+  .build__scene[data-stage="3"] .build__glow,
+  .build__scene[data-stage="4"] .build__glow { opacity: .55; }
+  .build__scene[data-stage="5"] .build__glow { opacity: 1; }
+
+  .build__scene[data-stage="4"] .build__handle,
+  .build__scene[data-stage="5"] .build__handle { opacity: 1; transform: none; }
+
+  .build__scene[data-stage="5"] .build__seam { opacity: .8; }
+
+  /* счётчик и подпись */
+  .build__counter {
+    position: absolute; left: 20px; top: 18px;
+    font-size: 12px; color: var(--fg-3); letter-spacing: .08em;
+  }
+  .build__spec {
+    position: absolute; left: 20px; right: 20px; bottom: 18px;
+    color: var(--fg-3);
+  }
+
+  /* ---------------- шаги ---------------- */
+
+  .build__steps { list-style: none; margin: 0; padding: 0; }
+  .build__step {
+    display: flex; flex-direction: column; gap: 11px;
+    padding-block: clamp(28px, 5vw, 56px);
+    border-bottom: 1px solid var(--rule);
+    transition: opacity .6s;
+  }
+  /* Приглушаем неактивные шаги только когда подсветкой управляет скрипт */
+  .build--live .build__step { opacity: .4; }
+  .build__step:last-child { border-bottom: 0; }
+  .build--live .build__step.is-active { opacity: 1; }
+  .build__step-n { color: var(--fg-3); }
+  .build__step-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(22px, 2.7vw, 32px);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+  .build__step .body-2 { max-width: 54ch; }
+
+  @media (min-width: 940px) {
+    .build__steps { padding-block: 18vh 22vh; }
+  }
+  @media (max-width: 939px) {
+    .build--live .build__step { opacity: 1; }
+    .build__scene { min-height: 300px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .build--live .build__step { opacity: 1; }
+  }
+</style>
+
+<script>
+  // Переинициализация при переходах без перезагрузки. Событие приходит
+  // и на первой загрузке страницы, поэтому отдельный вызов не нужен —
+  // иначе обработчики навесились бы дважды.
+  let ready_init = null;
+  function init() {
+    // Повторный вызов на том же адресе пропускаем: иначе на первой
+    // загрузке обработчики навесились бы дважды.
+    if (ready_init === location.pathname) return;
+    ready_init = location.pathname;
+
+  const buildRoot = document.querySelector('[data-build]');
+  if (buildRoot) {
+    const scene = buildRoot.querySelector('[data-scene]');
+    const counterEl = buildRoot.querySelector('[data-counter]');
+    const specEl = buildRoot.querySelector('[data-spec]');
+    const stepEls = Array.from(buildRoot.querySelectorAll('.build__step'));
+    const specList = [
+      'Замер бесплатный',
+      '60–70 мм · 3–5 камер',
+      'Глухая · поворотная · поворотно-откидная',
+      'Собственный цех стеклопакетов',
+      'Микропроветривание · зимний режим',
+      'ГОСТ 30971 · своя бригада',
+    ];
+
+    const applyStage = (i) => {
+      scene.dataset.stage = String(i);
+      counterEl.textContent =
+        String(i + 1).padStart(2, '0') + ' / ' + String(stepEls.length).padStart(2, '0');
+      specEl.textContent = specList[i] || '';
+      stepEls.forEach((el, k) => el.classList.toggle('is-active', k === i));
+    };
+
+    applyStage(0);
+
+    /* Узкая полоса поперёк середины экрана: шаг становится активным,
+       когда пересекает её. Полоса намеренно не нулевой высоты — при
+       -50%/-50% прямоугольник вырождается в линию, и браузер перестаёт
+       считать пересечение состоявшимся. */
+    let bandFired = false;
+    const band = new IntersectionObserver(
+      (entries) => {
+        // Подсветку неактивных шагов включаем лишь после первого реального
+        // события: если наблюдатель молчит, текст остаётся полностью читаемым
+        if (!bandFired) { bandFired = true; buildRoot.classList.add('build--live'); }
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            applyStage(Number(entry.target.dataset.step));
+          }
+        });
+      },
+      { rootMargin: '-48% 0px -48% 0px', threshold: 0 }
+    );
+    stepEls.forEach((el) => band.observe(el));
+  }
+  }
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>

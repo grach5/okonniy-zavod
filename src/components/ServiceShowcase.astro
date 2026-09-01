@@ -1,0 +1,171 @@
+---
+import { services } from '../data/services.js';
+import { url } from '../lib/url.js';
+
+/* Реестр направлений вместо сетки карточек.
+   Сетка одинаковых скруглённых плиток — главный признак шаблонного сайта,
+   поэтому здесь журнальный набор: полноширинные строки, линейки разной
+   толщины, крупная антиква, моноширинные цифры. Силуэт изделия проступает
+   справа при наведении — форма у каждого направления своя. */
+
+const shapes = {
+  'plastikovye-okna': 'window',
+  'plastikovye-dveri': 'door',
+  'osteklenie-balkonov': 'balcony',
+  'osteklenie-domov': 'house',
+  'panoramnye-vitrazhi': 'pano',
+  'alyuminievye-konstrukcii': 'facade',
+};
+---
+
+<div class="reg">
+  {services.map((s, i) => (
+    <a class="reg__row" href={url(`/uslugi/${s.slug}`)} data-shape={shapes[s.slug]}>
+      <span class="reg__n mono">{String(i + 1).padStart(2, '0')}</span>
+
+      <span class="reg__main">
+        <span class="reg__name">{s.title}</span>
+        <span class="reg__lede">{s.lead}</span>
+      </span>
+
+      <span class="reg__meta">
+        <span class="reg__price mono">от {s.priceFrom.toLocaleString('ru-RU')} {s.priceUnit}</span>
+        <span class="reg__term label">срок {s.term}</span>
+      </span>
+
+      <span class="reg__mark" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i><i></i>
+      </span>
+    </a>
+  ))}
+</div>
+
+<style>
+  .reg { border-top: 4px solid var(--fg); }
+
+  .reg__row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding-block: clamp(26px, 3.4vw, 44px);
+    border-bottom: 1px solid rgb(var(--fg-rgb) / .13);
+    text-decoration: none;
+    color: inherit;
+    transition: background .3s;
+  }
+  @media (min-width: 860px) {
+    .reg__row {
+      grid-template-columns: 64px minmax(0, 7fr) minmax(0, 3fr) 108px;
+      gap: clamp(24px, 3vw, 56px);
+      align-items: center;
+    }
+  }
+  .reg__row:hover { background: rgb(var(--fg-rgb) / .03); }
+
+  /* тонкая световая линия, проезжающая по строке при наведении */
+  .reg__row::after {
+    content: "";
+    position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
+    background: var(--accent);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform .55s cubic-bezier(.16,.8,.3,1);
+  }
+  .reg__row:hover::after { transform: scaleX(1); }
+
+  .reg__n { font-size: 12px; color: var(--accent); letter-spacing: .1em; align-self: start; }
+  @media (min-width: 860px) { .reg__n { align-self: center; } }
+
+  .reg__main { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+  .reg__name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(26px, 3.4vw, 46px);
+    line-height: .98;
+    letter-spacing: -0.032em;
+    transition: color .3s;
+  }
+  .reg__row:hover .reg__name { color: var(--accent); }
+  .reg__lede {
+    font-size: 15.5px; line-height: 1.6; color: var(--fg-2);
+    max-width: 58ch;
+  }
+
+  .reg__meta { display: flex; flex-direction: column; gap: 5px; }
+  .reg__price { font-size: 14px; color: var(--fg); }
+  .reg__term { color: var(--fg-3); }
+
+  /* ---------------- силуэт изделия ---------------- */
+
+  .reg__mark {
+    display: none;
+    position: relative;
+    justify-self: end;
+    width: 92px; height: 92px;
+  }
+  @media (min-width: 860px) { .reg__mark { display: grid; place-items: center; } }
+
+  .reg__mark::before {
+    content: "";
+    position: absolute; inset: -18%;
+    background: radial-gradient(circle, var(--accent-glow), transparent 66%);
+    opacity: 0;
+    transition: opacity .5s;
+  }
+  .reg__row:hover .reg__mark::before { opacity: .8; }
+
+  .reg__mark i {
+    display: block;
+    background: rgb(var(--fg-rgb) / .16);
+    transition: background .5s, box-shadow .5s;
+  }
+  .reg__row:hover .reg__mark i {
+    background: linear-gradient(165deg, rgba(255,243,222,.95), rgb(var(--accent-rgb) / .55));
+    box-shadow: 0 0 14px 2px rgb(var(--accent-rgb) / .28);
+  }
+
+  /* общий контейнер силуэта */
+  .reg__mark {
+    --pad: 4px;
+  }
+  .reg__mark > i { border-radius: 0; }
+
+  .reg__mark {
+    grid-auto-flow: row;
+  }
+
+  /* формы: у каждого направления своя геометрия */
+  [data-shape] .reg__mark {
+    display: none;
+  }
+  @media (min-width: 860px) {
+    [data-shape] .reg__mark {
+      display: grid;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid rgb(var(--fg-rgb) / .22);
+      align-content: stretch;
+      justify-content: stretch;
+    }
+    [data-shape="window"]  .reg__mark { width: 66px; height: 84px; grid-template-columns: 1fr 1fr; grid-template-rows: 1.25fr 1fr; }
+    [data-shape="window"]  .reg__mark i:nth-child(n+5) { display: none; }
+
+    [data-shape="door"]    .reg__mark { width: 42px; height: 92px; grid-template-rows: 1.7fr 1fr; }
+    [data-shape="door"]    .reg__mark i:nth-child(n+3) { display: none; }
+
+    [data-shape="balcony"] .reg__mark { width: 98px; height: 50px; grid-template-columns: repeat(4, 1fr); }
+    [data-shape="balcony"] .reg__mark i:nth-child(n+5) { display: none; }
+
+    [data-shape="house"]   .reg__mark { width: 82px; height: 70px; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+    [data-shape="house"]   .reg__mark i:nth-child(n+5) { display: none; }
+
+    [data-shape="pano"]    .reg__mark { width: 62px; height: 92px; grid-template-columns: 1fr 1fr; }
+    [data-shape="pano"]    .reg__mark i:nth-child(n+3) { display: none; }
+
+    [data-shape="facade"]  .reg__mark { width: 92px; height: 68px; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reg__row::after { transition: none; }
+  }
+</style>

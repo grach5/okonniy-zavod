@@ -1,0 +1,122 @@
+---
+import { site, offices, cities } from '../data/site.js';
+import { services } from '../data/services.js';
+import Logo from './Logo.astro';
+import { url } from '../lib/url.js';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="ftr">
+  <div class="wrap">
+    <div class="ftr__top">
+      <div class="ftr__brand">
+        <Logo />
+        <p class="body-2 ftr__pitch">
+          Собственное производство изделий из ПВХ и алюминия в Артёме.
+          Работаем во Владивостоке, Артёме, Находке и Вольно-Надеждинском с 2010 года.
+        </p>
+        <div class="ftr__social">
+          <a href={site.social.vk} class="ftr__soc" rel="noopener" target="_blank">ВКонтакте</a>
+          <a href={site.social.telegram} class="ftr__soc" rel="noopener" target="_blank">Telegram</a>
+          <a href={site.social.whatsapp} class="ftr__soc" rel="noopener" target="_blank">WhatsApp</a>
+        </div>
+      </div>
+
+      <nav class="ftr__col" aria-label="Услуги">
+        <p class="eyebrow">Услуги</p>
+        {services.map((s) => <a href={url(`/uslugi/${s.slug}`)}>{s.nav}</a>)}
+      </nav>
+
+      <nav class="ftr__col" aria-label="Города">
+        <p class="eyebrow">Города</p>
+        {cities.map((c) => <a href={url(`/${c.slug}`)}>Окна в {c.nameIn}</a>)}
+      </nav>
+
+      <nav class="ftr__col" aria-label="Компания">
+        <p class="eyebrow">Компания</p>
+        <a href={url('/ceny')}>Цены</a>
+        <a href={url('/raboty')}>Наши работы</a>
+        <a href={url('/o-kompanii')}>О заводе</a>
+        <a href={url('/garantiya')}>Гарантия и документы</a>
+        <a href={url('/kontakty')}>Контакты</a>
+      </nav>
+
+      <div class="ftr__col ftr__col--contact">
+        <p class="eyebrow">Связаться</p>
+        {offices.map((o) => (
+          <div class="ftr__office">
+            <span class="ftr__office-city">{o.city}</span>
+            <span class="small">{o.street}</span>
+            <a class="ftr__phone mono" href={`tel:${o.phoneHref}`}>{o.phone}</a>
+          </div>
+        ))}
+        <a class="ftr__mail" href={`mailto:${site.email}`}>{site.email}</a>
+        <span class="small">{site.hours}</span>
+      </div>
+    </div>
+
+    <div class="ftr__bottom">
+      <span class="small">© {year} {site.name}. Все права защищены.</span>
+      <div class="ftr__legal">
+        <a href={url('/politika-konfidencialnosti')} class="small">Политика конфиденциальности</a>
+        <a href={url('/soglasie')} class="small">Согласие на обработку данных</a>
+      </div>
+      <span class="small ftr__note">
+        Цены на сайте не являются публичной офертой. Точная стоимость — после бесплатного замера.
+      </span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .ftr {
+    background: var(--surface-2);
+    border-top: 1px solid var(--rule);
+    padding-block: clamp(44px, 6vw, 76px) 28px;
+    margin-top: clamp(60px, 8vw, 110px);
+  }
+  .ftr__top {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 36px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--rule);
+  }
+  @media (min-width: 700px)  { .ftr__top { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1040px) { .ftr__top { grid-template-columns: 1.6fr 1fr 1fr 1fr 1.2fr; gap: 32px; } }
+
+  .ftr__brand { display: flex; flex-direction: column; gap: 18px; }
+  .ftr__pitch { max-width: 40ch; font-size: 14.5px; }
+  .ftr__social { display: flex; flex-wrap: wrap; gap: 8px; }
+  .ftr__soc {
+    display: inline-flex; align-items: center;
+    min-height: 44px;
+    padding: 7px 16px; border: 1px solid var(--rule-2); border-radius: 0;
+    font-size: 13px; text-decoration: none; color: var(--fg-2);
+    transition: border-color .2s, color .2s;
+  }
+  .ftr__soc:hover { border-color: var(--accent); color: var(--accent); }
+
+  .ftr__col { display: flex; flex-direction: column; gap: 2px; }
+  .ftr__col .eyebrow { margin-bottom: 4px; }
+  .ftr__col a {
+    display: inline-flex; align-items: center;
+    min-height: 44px;              /* минимальная цель для пальца */
+    font-size: 14.5px; color: var(--fg-2); text-decoration: none; transition: color .2s;
+  }
+  .ftr__col a:hover { color: var(--fg); }
+
+  .ftr__office { display: flex; flex-direction: column; gap: 2px; margin-bottom: 12px; }
+  .ftr__office-city { font-size: 14.5px; font-weight: 600; color: var(--fg); }
+  .ftr__phone { display: inline-flex; align-items: center; min-height: 44px; font-size: 15px; color: var(--fg) !important; text-decoration: none; }
+  .ftr__mail { display: inline-flex; align-items: center; min-height: 44px; font-size: 14.5px; }
+
+  .ftr__bottom {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px 28px;
+    padding-top: 24px;
+  }
+  .ftr__legal { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+  .ftr__legal a { color: var(--fg-3); display: inline-flex; align-items: center; min-height: 44px; }
+  .ftr__note { flex-basis: 100%; max-width: 70ch; color: var(--fg-3); opacity: .85; }
+</style>

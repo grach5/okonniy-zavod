@@ -1,0 +1,357 @@
+---
+import { services } from '../data/services.js';
+import { cities } from '../data/site.js';
+import { url } from '../lib/url.js';
+
+const {
+  id = 'zayavka',
+  title = 'Записаться на бесплатный замер',
+  lede = 'Замерщик приедет в удобное время, снимет размеры и посчитает точную стоимость. Выезд бесплатный и ни к чему не обязывает.',
+  service = '',
+  compact = false,
+} = Astro.props;
+---
+
+<section class="lead" id={id}>
+  <div class="lead__inner">
+    <div class="lead__copy">
+      <p class="eyebrow">Заявка</p>
+      <h2 class="lead__title">{title}</h2>
+      <p class="lede">{lede}</p>
+
+      {!compact && (
+        <ul class="lead__promises">
+          <li>Замер бесплатный, отказаться можно на любом этапе</li>
+          <li>Считаем при вас и оставляем расчёт на руках</li>
+          <li>Не передаём номер третьим лицам и не подписываем на рассылки</li>
+        </ul>
+      )}
+    </div>
+
+    <form class="lead__form" data-lead-form novalidate>
+      <!-- Ловушка для ботов: настоящий человек это поле не видит -->
+      <div class="lead__trap" aria-hidden="true">
+        <label for={`${id}-company`}>Не заполняйте это поле</label>
+        <input id={`${id}-company`} name="company" type="text" tabindex="-1" autocomplete="off" />
+      </div>
+
+      <div class="lead__row">
+        <div class="field">
+          <label class="field__label" for={`${id}-name`}>Как к вам обращаться</label>
+          <input class="input" id={`${id}-name`} name="name" type="text" autocomplete="given-name"
+                 placeholder="Имя" />
+        </div>
+
+        <div class="field">
+          <label class="field__label" for={`${id}-phone`}>Телефон <span class="req" aria-hidden="true">*</span></label>
+          <!-- type="tel" + inputmode: на действующем сайте здесь стоит type="text",
+               из-за чего на смартфоне открывается буквенная клавиатура -->
+          <input class="input" id={`${id}-phone`} name="phone" type="tel" inputmode="tel"
+                 autocomplete="tel" required placeholder="+7 (___) ___-__-__"
+                 aria-describedby={`${id}-phone-err`} data-phone />
+          <span class="field__error" id={`${id}-phone-err`}>Введите номер полностью — 10 цифр после +7</span>
+        </div>
+      </div>
+
+      <div class="lead__row">
+        <div class="field">
+          <label class="field__label" for={`${id}-service`}>Что нужно остеклить</label>
+          <select class="select" id={`${id}-service`} name="service">
+            <option value="">Ещё не определился</option>
+            {services.map((s) => (
+              <option value={s.title} selected={service === s.slug}>{s.title}</option>
+            ))}
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for={`${id}-city`}>Город</label>
+          <select class="select" id={`${id}-city`} name="city">
+            {cities.map((c) => <option value={c.name}>{c.name}</option>)}
+            <option value="Другой">Другой населённый пункт</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for={`${id}-when`}>Когда удобно принять замерщика</label>
+        <select class="select" id={`${id}-when`} name="when">
+          <option value="Любое время">В любое время в рабочие часы</option>
+          <option value="Утро">Утром, до 12:00</option>
+          <option value="День">Днём, 12:00–16:00</option>
+          <option value="Вечер">Вечером, после 16:00</option>
+          <option value="Выходной">В субботу</option>
+        </select>
+      </div>
+
+      {!compact && (
+        <div class="field">
+          <label class="field__label" for={`${id}-note`}>Что важно учесть</label>
+          <textarea class="textarea" id={`${id}-note`} name="note"
+                    placeholder="Например: третий этаж без лифта, окно выходит на трассу, нужен вынос по подоконнику"></textarea>
+          <span class="field__hint">Необязательно, но помогает посчитать точнее ещё до выезда</span>
+        </div>
+      )}
+
+      <!-- Явное согласие отдельным чекбоксом.
+           На действующем сайте согласие «по факту нажатия кнопки» —
+           это не соответствует требованиям 152-ФЗ -->
+      <div class="consent field">
+        <input type="checkbox" id={`${id}-consent`} name="consent" required data-consent />
+        <label for={`${id}-consent`}>
+          Я согласен на обработку персональных данных и ознакомился с
+          <a href={url('/politika-konfidencialnosti')}> политикой конфиденциальности</a>.
+          Согласие можно отозвать в любой момент.
+        </label>
+      </div>
+      <span class="field__error lead__consent-err" data-consent-err>Без согласия мы не имеем права принять заявку</span>
+
+      <button type="submit" class="btn btn--lg btn--block" data-submit>
+        <span data-submit-label>Отправить заявку</span>
+      </button>
+
+      <p class="small lead__note">
+        Нажимая кнопку, вы отправляете заявку. Мы перезвоним в рабочие часы —
+        обычно в течение 15 минут.
+      </p>
+    </form>
+
+    <div class="lead__done" data-lead-done hidden>
+      <div class="lead__done-mark" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <path d="M6 14.5l5.5 5.5L22 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h3>Заявка принята</h3>
+      <p class="body-2">
+        Менеджер перезвонит в рабочие часы, уточнит детали и согласует время замера.
+        Если нужно быстрее — напишите нам в WhatsApp или Telegram.
+      </p>
+      <button type="button" class="btn btn--ghost btn--sm" data-lead-reset>Отправить ещё одну</button>
+    </div>
+  </div>
+</section>
+
+<style>
+  .lead {
+    background: var(--surface-2);
+    color: var(--fg);
+    border: 1px solid var(--rule);
+    border-radius: 0;
+    overflow: hidden;
+    position: relative;
+    isolation: isolate;
+  }
+  /* Тёплый свет из окна — единственное «украшение» на всём блоке */
+  .lead::before {
+    content: "";
+    position: absolute;
+    inset: -30% -10% auto auto;
+    width: 62%;
+    aspect-ratio: 1;
+    background: radial-gradient(circle, color-mix(in srgb, var(--accent) 26%, transparent), transparent 66%);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .lead__inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(30px, 4vw, 56px);
+    padding: clamp(28px, 4.4vw, 64px);
+  }
+  @media (min-width: 940px) {
+    .lead__inner { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr); align-items: start; }
+  }
+
+  .lead__copy { display: flex; flex-direction: column; gap: 16px; }
+  .lead__title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(27px, 3.4vw, 42px);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: var(--fg);
+  }
+  .lead__copy .lede { color: color-mix(in srgb, var(--fg) 72%, transparent); }
+  .lead__copy .eyebrow { color: var(--accent); }
+
+  .lead__promises {
+    list-style: none; margin: 8px 0 0; padding: 0;
+    display: flex; flex-direction: column; gap: 10px;
+    border-top: 1px solid color-mix(in srgb, var(--fg) 16%, transparent);
+    padding-top: 20px;
+  }
+  .lead__promises li {
+    position: relative; padding-left: 24px;
+    font-size: 14.5px; line-height: 1.5;
+    color: color-mix(in srgb, var(--fg) 76%, transparent);
+  }
+  .lead__promises li::before {
+    content: ""; position: absolute; left: 2px; top: 8px;
+    width: 9px; height: 5px;
+    border: solid var(--accent); border-width: 0 0 1.5px 1.5px;
+    transform: rotate(-45deg);
+  }
+
+  .lead__form { display: flex; flex-direction: column; gap: 16px; }
+  .lead__form[hidden] { display: none; }
+  .lead__row { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 560px) { .lead__row { grid-template-columns: 1fr 1fr; } }
+
+  .lead__form .field__label { color: color-mix(in srgb, var(--fg) 72%, transparent); }
+  .lead__form .field__hint  { color: color-mix(in srgb, var(--fg) 66%, transparent); }
+  .lead__form .input,
+  .lead__form .select,
+  .lead__form .textarea {
+    background: color-mix(in srgb, var(--fg) 7%, transparent);
+    border-color: color-mix(in srgb, var(--fg) 22%, transparent);
+    color: var(--fg);
+  }
+  .lead__form .input::placeholder,
+  .lead__form .textarea::placeholder { color: color-mix(in srgb, var(--fg) 42%, transparent); }
+  .lead__form .input:focus,
+  .lead__form .select:focus,
+  .lead__form .textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  .lead__form .consent input[type="checkbox"] {
+    background: color-mix(in srgb, var(--fg) 7%, transparent);
+    border-color: color-mix(in srgb, var(--fg) 30%, transparent);
+  }
+  .lead__form .consent input[type="checkbox"]:checked { background: var(--accent); border-color: var(--accent); }
+  .lead__form .consent input[type="checkbox"]:checked::after { border-color: var(--surface-2); }
+  .lead__form .consent label { color: color-mix(in srgb, var(--fg) 68%, transparent); }
+  .lead__form .consent a { color: var(--accent); }
+  
+  .lead__note { color: color-mix(in srgb, var(--fg) 64%, transparent); }
+
+  .lead__consent-err { margin-top: -8px; }
+  .lead__consent-err.is-shown { display: block; }
+
+  .lead__trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+  .lead__done {
+    display: flex; flex-direction: column; gap: 14px; align-items: flex-start;
+    align-self: center;
+    animation: doneIn .35s cubic-bezier(.2,.7,.3,1);
+  }
+  .lead__done[hidden] { display: none; }
+  @keyframes doneIn { from { opacity: 0; transform: translateY(10px); } }
+  .lead__done-mark {
+    display: grid; place-items: center;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    color: var(--accent);
+  }
+  .lead__done h3 { color: var(--fg); }
+  .lead__done .body-2 { color: color-mix(in srgb, var(--fg) 72%, transparent); max-width: 46ch; }
+  .lead__done .btn--ghost { border-color: var(--rule-2); }
+</style>
+
+<script>
+  // Переинициализация при переходах без перезагрузки. Событие приходит
+  // и на первой загрузке страницы, поэтому отдельный вызов не нужен —
+  // иначе обработчики навесились бы дважды.
+  let ready_init = null;
+  function init() {
+    // Повторный вызов на том же адресе пропускаем: иначе на первой
+    // загрузке обработчики навесились бы дважды.
+    if (ready_init === location.pathname) return;
+    ready_init = location.pathname;
+
+  document.querySelectorAll('[data-lead-form]').forEach((form) => {
+    const phone = form.querySelector('[data-phone]');
+    const consent = form.querySelector('[data-consent]');
+    const consentErr = form.parentElement.querySelector('[data-consent-err]');
+    const done = form.parentElement.querySelector('[data-lead-done]');
+    const submit = form.querySelector('[data-submit]');
+    const label = form.querySelector('[data-submit-label]');
+
+    /* Маска телефона без внешних библиотек.
+       На действующем сайте ради этого подключается imask с unpkg
+       без указания версии — то есть «всегда последняя». */
+    const format = (digits) => {
+      let d = digits.replace(/\D/g, '');
+      if (d.startsWith('8')) d = '7' + d.slice(1);
+      if (!d.startsWith('7')) d = '7' + d;
+      d = d.slice(0, 11);
+      const p = d.slice(1);
+      let out = '+7';
+      if (p.length) out += ' (' + p.slice(0, 3);
+      if (p.length >= 3) out += ') ' + p.slice(3, 6);
+      if (p.length >= 6) out += '-' + p.slice(6, 8);
+      if (p.length >= 8) out += '-' + p.slice(8, 10);
+      return out;
+    };
+    const isValid = () => phone.value.replace(/\D/g, '').length === 11;
+
+    phone.addEventListener('input', () => {
+      const before = phone.value.length;
+      phone.value = format(phone.value);
+      if (before <= phone.value.length) phone.setSelectionRange(phone.value.length, phone.value.length);
+      phone.closest('.field').classList.toggle('is-invalid', phone.value.length > 4 && !isValid());
+    });
+    phone.addEventListener('focus', () => { if (!phone.value) phone.value = '+7 ('; });
+    phone.addEventListener('blur', () => {
+      if (phone.value === '+7 (' || phone.value === '+7') phone.value = '';
+      phone.closest('.field').classList.toggle('is-invalid', !!phone.value && !isValid());
+    });
+
+    consent.addEventListener('change', () => {
+      if (consent.checked) consentErr.classList.remove('is-shown');
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (form.company.value) return;                 // бот заполнил ловушку
+
+      let ok = true;
+      if (!isValid()) { phone.closest('.field').classList.add('is-invalid'); phone.focus(); ok = false; }
+      if (!consent.checked) { consentErr.classList.add('is-shown'); if (ok) consent.focus(); ok = false; }
+      if (!ok) return;
+
+      submit.disabled = true;
+      label.textContent = 'Отправляем…';
+
+      const payload = Object.fromEntries(new FormData(form).entries());
+      payload.page = location.pathname;
+
+      try {
+        /* Точка интеграции с бэкендом или CRM.
+           Пока эндпоинта нет — заявка не теряется, а логируется. */
+        if (window.LEAD_ENDPOINT) {
+          await fetch(window.LEAD_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+        } else {
+          console.info('[Заявка]', payload);
+          await new Promise((r) => setTimeout(r, 600));
+        }
+        if (typeof window.ym === 'function' && window.YM_ID) {
+          window.ym(window.YM_ID, 'reachGoal', 'lead_submit');
+        }
+        form.hidden = true;
+        done.hidden = false;
+        done.querySelector('h3').focus?.();
+      } catch (err) {
+        label.textContent = 'Не отправилось. Попробуйте ещё раз';
+        submit.disabled = false;
+      }
+    });
+
+    form.parentElement.querySelector('[data-lead-reset]')?.addEventListener('click', () => {
+      form.reset();
+      form.hidden = false;
+      done.hidden = true;
+      submit.disabled = false;
+      label.textContent = 'Отправить заявку';
+    });
+  });
+  }
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>

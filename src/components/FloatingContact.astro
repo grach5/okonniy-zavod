@@ -1,0 +1,122 @@
+---
+import { site, offices } from '../data/site.js';
+const main = offices.find((o) => o.isMain);
+/* Один сворачиваемый блок вместо четырёх конкурирующих виджетов,
+   которые на действующем сайте перекрывают контент на мобильном. */
+---
+
+<div class="fab" data-fab>
+  <div class="fab__panel" id="fab-panel" hidden>
+    <p class="fab__title">Как вам удобнее?</p>
+    <a class="fab__opt" href={site.social.whatsapp} target="_blank" rel="noopener">
+      <span class="fab__opt-name">WhatsApp</span>
+      <span class="fab__opt-note">Ответим в рабочие часы</span>
+    </a>
+    <a class="fab__opt" href={site.social.telegram} target="_blank" rel="noopener">
+      <span class="fab__opt-name">Telegram</span>
+      <span class="fab__opt-note">Канал и личные сообщения</span>
+    </a>
+    <a class="fab__opt" href={`tel:${main.phoneHref}`}>
+      <span class="fab__opt-name">{main.phone}</span>
+      <span class="fab__opt-note">{site.hours}</span>
+    </a>
+    <a class="fab__opt fab__opt--accent" href="#zayavka" data-fab-close>
+      <span class="fab__opt-name">Записаться на замер</span>
+      <span class="fab__opt-note">Бесплатно и ни к чему не обязывает</span>
+    </a>
+  </div>
+
+  <button type="button" class="fab__btn" aria-expanded="false" aria-controls="fab-panel" data-fab-toggle>
+    <span class="fab__btn-label">Связаться</span>
+    <svg class="fab__btn-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </button>
+</div>
+
+<style>
+  .fab {
+    position: fixed;
+    right: clamp(14px, 3vw, 28px);
+    bottom: clamp(14px, 3vw, 28px);
+    z-index: 70;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+  }
+  .fab__btn {
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 14px 22px;
+    background: var(--surface-2); color: var(--fg);
+    border: 0; border-radius: 100px;
+    font-size: 15px; font-weight: 600;
+    cursor: pointer;
+    box-shadow: none;
+    transition: transform .25s cubic-bezier(.2,.7,.3,1);
+  }
+  .fab__btn:hover { transform: translateY(-2px); }
+  .fab__btn-icon { transition: transform .25s; }
+  .fab__btn[aria-expanded="false"] .fab__btn-icon { transform: rotate(180deg); }
+
+  .fab__panel {
+    width: min(300px, calc(100vw - 32px));
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    box-shadow: none;
+    padding: 8px;
+    display: flex; flex-direction: column; gap: 2px;
+    animation: fabIn .2s cubic-bezier(.2,.7,.3,1);
+  }
+  .fab__panel[hidden] { display: none; }
+  @keyframes fabIn { from { opacity: 0; transform: translateY(8px); } }
+
+  .fab__title {
+    font-size: 12px; font-weight: 600; color: var(--fg-3);
+    text-transform: uppercase; letter-spacing: .08em;
+    padding: 10px 12px 8px;
+  }
+  .fab__opt {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 11px 12px; border-radius: 4px;
+    text-decoration: none; color: var(--fg);
+    transition: background .18s;
+  }
+  .fab__opt:hover { background: var(--surface-2); }
+  .fab__opt-name { font-size: 15px; font-weight: 600; }
+  .fab__opt-note { font-size: 12.5px; color: var(--fg-3); }
+  .fab__opt--accent { background: var(--accent-dim); }
+  .fab__opt--accent .fab__opt-name { color: var(--accent); }
+</style>
+
+<script>
+  // Переинициализация при переходах без перезагрузки. Событие приходит
+  // и на первой загрузке страницы, поэтому отдельный вызов не нужен —
+  // иначе обработчики навесились бы дважды.
+  let ready_init = null;
+  function init() {
+    // Повторный вызов на том же адресе пропускаем: иначе на первой
+    // загрузке обработчики навесились бы дважды.
+    if (ready_init === location.pathname) return;
+    ready_init = location.pathname;
+
+  const root = document.querySelector('[data-fab]');
+  if (root) {
+    const btn = root.querySelector('[data-fab-toggle]');
+    const panel = root.querySelector('#fab-panel');
+    const setOpen = (open) => {
+      btn.setAttribute('aria-expanded', String(open));
+      panel.hidden = !open;
+      btn.querySelector('.fab__btn-label').textContent = open ? 'Свернуть' : 'Связаться';
+    };
+    btn.addEventListener('click', () => setOpen(panel.hidden));
+    root.querySelector('[data-fab-close]')?.addEventListener('click', () => setOpen(false));
+    document.addEventListener('click', (e) => {
+      if (!panel.hidden && !root.contains(e.target)) setOpen(false);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !panel.hidden) { setOpen(false); btn.focus(); }
+    });
+  }
+  }
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>
