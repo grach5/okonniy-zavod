@@ -59,6 +59,18 @@ for (const page of pages) {
       note(page, 'скорость', 'изображение без width/height — сдвиг макета');
   }
 
+  // Изображения из public проверяем отдельно: у них абсолютный путь,
+  // и в подпапке он ведёт в корень домена. Именно так на публикации
+  // отвалились все фотографии в разделе «Работы».
+  for (const src of all(html, /<img[^>]+src="(\/[^"?]*)"/g)) {
+    if (src.startsWith('/_astro/')) continue;
+    const rel = PREFIX && src.startsWith(PREFIX + '/') ? src.slice(PREFIX.length) : src;
+    if (PREFIX && !src.startsWith(PREFIX + '/'))
+      note(page, 'изображения', `путь мимо базового: ${src}`);
+    else if (!existsSync(join(DIST, rel.replace(/^\//, ''))))
+      note(page, 'изображения', `файла нет: ${src}`);
+  }
+
   for (const raw of all(html, /href="(\/[^"#?]*)"/g)) {
     if (PREFIX && !raw.startsWith(PREFIX + '/') && raw !== PREFIX) {
       note(page, 'ссылки', `ссылка мимо базового пути: ${raw}`);

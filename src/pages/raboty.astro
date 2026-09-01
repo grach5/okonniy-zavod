@@ -38,7 +38,7 @@ import { url } from '../lib/url.js';
       {works.map((w, i) => (
         <article class="case reveal">
           <figure class="case__media">
-            <img src={w.img} alt={w.alt} width={w.w} height={w.h}
+            <img src={url(w.img)} alt={w.alt} width={w.w} height={w.h}
                  loading={i < 2 ? 'eager' : 'lazy'} decoding="async" />
           </figure>
           <div class="case__body">
