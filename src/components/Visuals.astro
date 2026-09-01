@@ -93,7 +93,9 @@ const small = [
     display: block;
     width: 100%;
     height: auto;
-    border: 0;
+    /* Светлый интерьер на светлой странице без рамки вытекал в бумагу.
+       Та же линейка, что у снимков в разделе «Работы». */
+    border: var(--line-hair);
   }
 
   .vis--lead {

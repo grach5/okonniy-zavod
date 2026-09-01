@@ -27,6 +27,17 @@
   --bg-rgb:     247 245 241;
   --accent-rgb: 138 101 32;
 
+  /* Те же цвета, но защищённые от локальных переопределений.
+     Тёмные островки вроде шапки над первым экраном меняют --fg-rgb у
+     себя, и это протекает во вложенные панели: выпадающее меню услуг
+     получалось светлым текстом по светлой подложке. Панели, которые
+     живут по цветам страницы, а не островка, берут эти токены. */
+  --page-fg-rgb:     22 22 26;
+  --page-bg-rgb:     247 245 241;
+  --page-accent-rgb: 138 101 32;
+  --page-fg-2:       #54524E;
+  --page-fg-3:       #6B6862;
+
   /* --- бумага --- */
   --bg:          rgb(var(--bg-rgb));
   --bg-2:        #EFECE5;
@@ -85,6 +96,12 @@
   --bg-rgb:     10 10 11;
   --accent-rgb: 240 200 140;
 
+  --page-fg-rgb:     245 242 236;
+  --page-bg-rgb:     10 10 11;
+  --page-accent-rgb: 240 200 140;
+  --page-fg-2:       #ADA79D;
+  --page-fg-3:       #9A948A;
+
   --bg-2:        #060607;
   --surface:     #101011;
   --surface-2:   #161618;
@@ -104,6 +121,23 @@
    темах: это кадр с изделием, а не элемент интерфейса. Класс
    переопределяет каналы локально, поэтому вложенный текст и линейки
    становятся светлыми без единой правки в самих компонентах. */
+/* Панель по цветам страницы, даже внутри тёмного островка. */
+.on-page {
+  --fg-rgb:     var(--page-fg-rgb);
+  --bg-rgb:     var(--page-bg-rgb);
+  --accent-rgb: var(--page-accent-rgb);
+  --fg:         rgb(var(--page-fg-rgb));
+  --bg:         rgb(var(--page-bg-rgb));
+  --fg-2:       var(--page-fg-2);
+  --fg-3:       var(--page-fg-3);
+  --accent:     rgb(var(--page-accent-rgb));
+  --rule:       rgb(var(--page-fg-rgb) / .15);
+  --rule-2:     rgb(var(--page-fg-rgb) / .30);
+  --line-hair:  1px solid rgb(var(--page-fg-rgb) / .15);
+  --line-thin:  1px solid rgb(var(--page-fg-rgb) / .30);
+  color: var(--fg);
+}
+
 .on-dark {
   --fg-rgb:     245 242 236;
   --bg-rgb:     10 10 11;
@@ -459,7 +493,8 @@ option { background: var(--surface-2); color: var(--fg); }
   aspect-ratio: var(--ar, 4 / 3);
   background:
     radial-gradient(66% 52% at 50% 42%, rgb(var(--accent-rgb) / .11), transparent 74%),
-    linear-gradient(180deg, #0F0F11, #08080A);
+    radial-gradient(66% 52% at 50% 42%, rgb(var(--accent-rgb) / .10), transparent 74%),
+    var(--surface-2);
   border: var(--line-hair);
   border-radius: 0;
   overflow: hidden;
@@ -467,10 +502,10 @@ option { background: var(--surface-2); color: var(--fg); }
 .photo-slot::before {
   content: "";
   position: absolute; inset: 13% 16%;
-  border: 1px solid rgb(var(--fg-rgb) / .09);
+  border: 1px solid rgb(var(--fg-rgb) / .18);
   background:
-    linear-gradient(to right, transparent calc(50% - .5px), rgb(var(--fg-rgb) / .09) calc(50% - .5px), rgb(var(--fg-rgb) / .09) calc(50% + .5px), transparent calc(50% + .5px)),
-    linear-gradient(to bottom, transparent calc(44% - .5px), rgb(var(--fg-rgb) / .09) calc(44% - .5px), rgb(var(--fg-rgb) / .09) calc(44% + .5px), transparent calc(44% + .5px));
+    linear-gradient(to right, transparent calc(50% - .5px), rgb(var(--fg-rgb) / .18) calc(50% - .5px), rgb(var(--fg-rgb) / .18) calc(50% + .5px), transparent calc(50% + .5px)),
+    linear-gradient(to bottom, transparent calc(44% - .5px), rgb(var(--fg-rgb) / .18) calc(44% - .5px), rgb(var(--fg-rgb) / .18) calc(44% + .5px), transparent calc(44% + .5px));
   pointer-events: none;
 }
 .photo-slot__note {
@@ -482,7 +517,7 @@ option { background: var(--surface-2); color: var(--fg); }
   color: var(--fg-3);
   padding: 10px 14px;
   border: 1px dashed var(--rule-2);
-  background: rgba(10,10,11,.55);
+  background: rgb(var(--bg-rgb) / .72);
 }
 .photo-slot--wide { --ar: 16 / 9; }
 .photo-slot--tall { --ar: 3 / 4; }
@@ -494,13 +529,21 @@ option { background: var(--surface-2); color: var(--fg); }
    что наблюдатель действительно работает.
    ========================================================================== */
 
-.js-anim .reveal {
-  opacity: 0;
-  transform: translateY(14px);
-  transition: opacity .7s cubic-bezier(.16,.8,.3,1), transform .7s cubic-bezier(.16,.8,.3,1);
+/* Базовое состояние блока — видимое. Анимация навешивается сверху,
+   только на те блоки, которые наблюдатель успел отметить классом is-in.
+   Прежняя схема была обратной: класс на документе прятал все блоки
+   заранее, и любой сбой наблюдателя оставлял раздел пустым — так
+   пропадал текст в услугах. Теперь худшее, что может случиться, —
+   страница без анимации. */
+.reveal.is-in {
+  animation: reveal-rise .7s cubic-bezier(.16, .8, .3, 1) both;
 }
-.js-anim .reveal.is-in { opacity: 1; transform: none; }
-@media (prefers-reduced-motion: reduce) { .js-anim .reveal { opacity: 1; transform: none; } }
+@keyframes reveal-rise {
+  from { opacity: 0; transform: translateY(14px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal.is-in { animation: none; }
+}
 
 /* ==========================================================================
    Служебное
@@ -574,12 +617,27 @@ hr.rule { border: 0; border-top: var(--line-hair); margin: 0; }
    съедает картридж и остаётся нечитаемой, поэтому для печати собираем
    отдельный, светлый вариант. */
 @media print {
-  :root { --bg: #fff; --fg: #111; --fg-2: #444; --fg-3: #555; --accent: #7a5a20; }
+  /* Каналы обязательно переобъявить вместе с производными: из них
+     считаются все линейки, рамки таблиц и границы кнопок. Без этого
+     печать из тёмной темы давала белые линии на белой бумаге. */
+  :root {
+    --fg-rgb: 17 17 17; --bg-rgb: 255 255 255; --accent-rgb: 122 90 32;
+    --bg: #fff; --bg-2: #fff; --surface: #fff; --surface-2: #fff;
+    --fg: #111; --fg-2: #444; --fg-3: #555; --accent: #7a5a20;
+  }
+  /* Тёмные островки переопределяют токены на себе и переживают :root,
+     поэтому блок сборки окна печатался белым по белому. */
+  .on-dark {
+    --fg-rgb: 17 17 17; --bg-rgb: 255 255 255; --accent-rgb: 122 90 32;
+    --bg: #fff; --bg-2: #fff; --surface: #fff; --surface-2: #fff;
+    --fg: #111; --fg-2: #444; --fg-3: #555; --accent: #7a5a20;
+    color: #111 !important; background: #fff !important;
+  }
   html, body { background: #fff !important; color: #111 !important; }
   .hero__stage, .hero__plate, canvas, video,
   .skip-link, .float-contact, .header__burger { display: none !important; }
   .hero { min-height: auto !important; padding-block: 24px !important; }
-  .js-anim .reveal { opacity: 1 !important; transform: none !important; }
+  .reveal.is-in { animation: none !important; }
   a[href^="http"]::after,
   a[href^="/"]::after { content: " (" attr(href) ")"; font-size: 11px; color: #555; }
   .section { padding-block: 18px !important; }

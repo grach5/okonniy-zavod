@@ -82,6 +82,9 @@ import { url } from '../lib/url.js';
   .head {
     padding-block: clamp(20px, 3vw, 34px) clamp(38px, 6vw, 72px);
     border-bottom: 1px solid var(--rule);
+    /* Тот же акцентный отсвет, что и на остальных внутренних страницах:
+       без него раздел выбивался из общего ряда. */
+    background: radial-gradient(70% 120% at 88% -10%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 64%);
   }
   .crumbs { display: flex; gap: 9px; font-size: 13px; color: var(--fg-3); margin-bottom: clamp(24px, 4vw, 46px); }
   .crumbs a { color: var(--fg-3); text-decoration: none; }
@@ -99,7 +102,10 @@ import { url } from '../lib/url.js';
   .case__media { margin: 0; border: 1px solid var(--rule); overflow: hidden; background: var(--surface); }
   .case__media img {
     width: 100%; height: auto; display: block;
-    filter: saturate(.82) contrast(1.04) brightness(.92);
+    /* Затемнение подбиралось под тёмную тему; на светлой странице
+       снимки от него выглядели пасмурными. Оставляем только лёгкую
+       десатурацию, яркость не трогаем. */
+    filter: saturate(.88) contrast(1.03);
     transition: filter .6s cubic-bezier(.16,.8,.3,1), transform .8s cubic-bezier(.16,.8,.3,1);
   }
   .case:hover .case__media img { filter: none; transform: scale(1.02); }

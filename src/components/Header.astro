@@ -8,6 +8,8 @@ const main = offices.find((o) => o.isMain);
 // В подпапке pathname включает базовую часть, и сравнение с '/ceny'
 // никогда бы не сработало — активный пункт не подсвечивался бы.
 const here = stripBase(Astro.url.pathname);
+/* Над тёмным первым экраном шапке нужны светлые токены. */
+const { overHero = false } = Astro.props;
 const isActive = (href) => here === href || (href !== '/' && here.startsWith(href));
 
 /* Навигация намеренно короткая: логотип, три пункта и одна кнопка.
@@ -20,7 +22,7 @@ const nav = [
 ];
 ---
 
-<header class="hdr" data-header>
+<header class:list={['hdr', overHero && 'hdr--over-hero']} data-header>
   <div class="hdr__bar wrap">
     <a href={url('/')} class="hdr__logo" aria-label="Оконный завод — на главную">
       <Logo />
@@ -37,7 +39,7 @@ const nav = [
         >
           Услуги
         </button>
-        <div class="hdr__menu" id="services-menu" data-drop-menu hidden>
+        <div class="hdr__menu on-page" id="services-menu" data-drop-menu hidden>
           {services.map((s) => (
             <a href={url(`/uslugi/${s.slug}`)} class="hdr__menu-item">
               <span class="hdr__menu-title">{s.nav}</span>
@@ -80,7 +82,7 @@ const nav = [
 
   <!-- Мобильное меню. На действующем сайте бургер собран на <div> и
        недоступен с клавиатуры — здесь это кнопка с корректными состояниями -->
-  <div class="mnav" id="mobile-menu" data-mobile-menu hidden>
+  <div class="mnav on-page" id="mobile-menu" data-mobile-menu hidden>
     <div class="mnav__inner wrap">
       <p class="label">Услуги</p>
       <div class="mnav__group">
@@ -117,12 +119,27 @@ const nav = [
     transition: background .4s, border-color .4s, backdrop-filter .4s;
     border-bottom: 1px solid transparent;
   }
+  /* Над тёмным первым экраном шапка берёт светлые токены: иначе её
+     содержимое красится тёмным по тёмному кадру и пропадает. Класс
+     снимается скриптом, как только кадр прокручен. */
+  .hdr--over-hero:not(.is-stuck) {
+    --fg-rgb: 245 242 236;
+    --accent-rgb: 240 200 140;
+    --fg: rgb(var(--fg-rgb));
+    --fg-2: #ADA79D;
+    --fg-3: #9A948A;
+    --accent: rgb(var(--accent-rgb));
+    --rule: rgb(var(--fg-rgb) / .13);
+    --rule-2: rgb(var(--fg-rgb) / .28);
+    color: var(--fg);
+  }
+
   /* Пока первый экран не прокручен — шапка прозрачная и лежит поверх кадра */
   .hdr.is-stuck {
-    background: rgba(10, 10, 11, .88);
+    background: rgb(var(--bg-rgb) / .88);
     backdrop-filter: blur(20px) saturate(1.3);
     -webkit-backdrop-filter: blur(20px) saturate(1.3);
-    border-bottom: 2px solid rgb(var(--fg-rgb) / .55);
+    border-bottom: 1px solid var(--rule-2);
   }
 
   .hdr__bar {
@@ -153,9 +170,11 @@ const nav = [
 
   .hdr__drop { position: relative; }
   .hdr__menu {
-    position: absolute; top: calc(100% + 10px); left: 0;
+    /* Без зазора: 10 px между кнопкой и меню не принадлежали ни тому,
+       ни другому, и курсор по дороге к пунктам покидал область. */
+    position: absolute; top: 100%; left: 0; margin-top: 0;
     min-width: 340px;
-    background: rgba(18, 18, 21, .96);
+    background: rgb(var(--bg-rgb) / .97);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border: 1px solid var(--rule);
@@ -203,7 +222,7 @@ const nav = [
 
   .mnav {
     position: fixed; inset: 68px 0 0;
-    background: rgba(10, 10, 11, .99);
+    background: rgb(var(--bg-rgb) / .99);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     overflow-y: auto;
@@ -279,6 +298,16 @@ const nav = [
   /* --- шапка становится непрозрачной после первого экрана --- */
   const header = document.querySelector('[data-header]');
   if (header) {
+    // На страницах без формы заявки (404, политика, согласие) ссылка
+    // «Замер» вела на несуществующий якорь и просто ничего не делала.
+    // Проверяем наличие цели и подменяем адрес на страницу контактов.
+    if (!document.getElementById('zayavka')) {
+      const base = document.documentElement.dataset.base || '';
+      document.querySelectorAll('a[href="#zayavka"]').forEach((a) => {
+        a.setAttribute('href', base + '/kontakty#zayavka');
+      });
+    }
+
     const onScroll = () => header.classList.toggle('is-stuck', window.scrollY > 40);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -299,7 +328,6 @@ const nav = [
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && !menu.hidden) { setOpen(false); trigger.focus(); }
     });
-    trigger.parentElement.addEventListener('mouseleave', () => setOpen(false));
   }
 
   /* --- мобильное меню --- */

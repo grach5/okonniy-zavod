@@ -18,7 +18,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import FloatingContact from '../components/FloatingContact.astro';
 import { site, offices } from '../data/site.js';
-import { url } from '../lib/url.js';
+import { url, stripBase } from '../lib/url.js';
 
 const {
   title,
@@ -35,6 +35,10 @@ const {
 } = Astro.props;
 
 const IS_DEMO = import.meta.env.PUBLIC_DEMO === '1';
+/* Тёмный первый экран есть только на главной. Признак вычисляем на
+   сервере, а не скриптом: иначе шапка успевала бы мигнуть тёмным
+   текстом по тёмному кадру до выполнения JavaScript. */
+const overHero = stripBase(Astro.url.pathname) === '/';
 /* Базовый адрес берём из конфигурации сборки, а не из данных компании.
    На демонстрационном стенде жёсткий okonniyzavod.ru означал бы, что
    разметка Schema.org заявляет чужой домен как свой идентификатор, а
@@ -106,10 +110,30 @@ const allSchema = [orgSchema, breadcrumbSchema, ...schema].filter(Boolean);
 ---
 
 <!doctype html>
-<html lang="ru">
+<html lang="ru" data-base={url('/').replace(/\/$/, '')}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {/* Демонстрационный стенд закрыт от индексации целиком. На нём
+        стоят реальные реквизиты завода, но расчётные цены: попав в
+        поиск, такая копия конкурировала бы с настоящим сайтом
+        компании и вводила бы её клиентов в заблуждение. */}
+    {(noindex || IS_DEMO) && (
+      <meta name="robots" content="noindex, nofollow" />
+    )}
+
+    <!-- Иконки. На действующем сайте их нет вовсе: вкладка безымянная.
+         iOS не умеет SVG в apple-touch-icon, поэтому для него отдельный PNG. -->
+    <link rel="icon" href={url('/favicon.svg')} type="image/svg+xml" />
+    <link rel="icon" href={url('/icon-32.png')} sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href={url('/apple-touch-icon.png')} sizes="180x180" />
+    <link rel="manifest" href={url('/site.webmanifest')} />
+    <meta name="theme-color" content="#F7F5F1" />
 
     <!-- Тема выставляется до первой отрисовки. Если сделать это позже,
          страница успевает моргнуть противоположной темой — на светлом
@@ -133,25 +157,6 @@ const allSchema = [orgSchema, breadcrumbSchema, ...schema].filter(Boolean);
         apply();
       })();
     </script>
-
-    <title>{fullTitle}</title>
-    <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
-    {/* Демонстрационный стенд закрыт от индексации целиком. На нём
-        стоят реальные реквизиты завода, но расчётные цены: попав в
-        поиск, такая копия конкурировала бы с настоящим сайтом
-        компании и вводила бы её клиентов в заблуждение. */}
-    {(noindex || IS_DEMO) && (
-      <meta name="robots" content="noindex, nofollow" />
-    )}
-
-    <!-- Иконки. На действующем сайте их нет вовсе: вкладка безымянная.
-         iOS не умеет SVG в apple-touch-icon, поэтому для него отдельный PNG. -->
-    <link rel="icon" href={url('/favicon.svg')} type="image/svg+xml" />
-    <link rel="icon" href={url('/icon-32.png')} sizes="32x32" type="image/png" />
-    <link rel="apple-touch-icon" href={url('/apple-touch-icon.png')} sizes="180x180" />
-    <link rel="manifest" href={url('/site.webmanifest')} />
-    <meta name="theme-color" content="#F7F5F1" />
 
     <!-- Шрифты первого экрана грузим заранее: иначе заголовок
          перерисовывается запасной гарнитурой и кадр дёргается. -->
@@ -179,7 +184,7 @@ const allSchema = [orgSchema, breadcrumbSchema, ...schema].filter(Boolean);
 
   <body>
     <a class="skip-link" href="#main">Перейти к содержанию</a>
-    <Header />
+    <Header overHero={overHero} />
     <main id="main">
       <slot />
     </main>
@@ -188,35 +193,38 @@ const allSchema = [orgSchema, breadcrumbSchema, ...schema].filter(Boolean);
 
     <script>
       // Появление блоков при прокрутке.
-      // Класс js-anim ставится только при поддержке IntersectionObserver —
-      // без него .reveal остаётся видимым, и контент не может пропасть.
-      // Событие astro:page-load приходит и на первой загрузке, и после
-      // каждого перехода без перезагрузки, поэтому вешаемся только на него:
-      // отдельный вызов навесил бы обработчики дважды.
-      let ready_initReveal = null;
+      //
+      // Скрипт только помечает блоки классом is-in — прятать он ничего
+      // не умеет. Это принципиально: если наблюдатель не сработает или
+      // скрипт вовсе не выполнится, страница останется без анимации,
+      // но с текстом. Прежняя схема прятала блоки заранее и при сбое
+      // съедала целые разделы.
+      let revealDone = null;
       function initReveal() {
-        // Повторный вызов на том же адресе пропускаем: иначе на первой
-        // загрузке обработчики навесились бы дважды.
-        if (ready_initReveal === location.pathname) return;
-        ready_initReveal = location.pathname;
+        if (revealDone === location.pathname) return;
+        revealDone = location.pathname;
 
-        const items = document.querySelectorAll('.reveal');
-        const canAnimate =
-          'IntersectionObserver' in window &&
-          !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-        if (!items.length || !canAnimate) return;
-        document.documentElement.classList.add('js-anim');
+        const items = Array.from(document.querySelectorAll('.reveal'));
+        if (!items.length) return;
+        // При отключённом движении наблюдатель не нужен, но пометку
+        // проставить обязательно: на ней держится не только анимация —
+        // например, акцентная полоса у этапов раскрывается по is-in и
+        // иначе осталась бы схлопнутой навсегда.
+        const still =
+          !('IntersectionObserver' in window) ||
+          window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (still) {
+          items.forEach((el) => el.classList.add('is-in'));
+          return;
+        }
 
         const io = new IntersectionObserver(
           (entries) => {
-            // Соседние блоки, вошедшие в кадр одновременно, показываем не
-            // разом, а с задержкой в 45 мс: волна читается как движение,
-            // одновременная вспышка — как перерисовка.
+            // Соседние блоки выходят волной по 45 мс, а не вспышкой разом.
             let step = 0;
             entries.forEach((e) => {
               if (!e.isIntersecting) return;
-              e.target.style.transitionDelay = step * 45 + 'ms';
+              e.target.style.animationDelay = step * 45 + 'ms';
               e.target.classList.add('is-in');
               io.unobserve(e.target);
               step = Math.min(step + 1, 5);
@@ -225,37 +233,6 @@ const allSchema = [orgSchema, breadcrumbSchema, ...schema].filter(Boolean);
           { rootMargin: '0px 0px -8% 0px', threshold: 0.08 }
         );
         items.forEach((el) => io.observe(el));
-
-        // Страховка на случай, когда наблюдатель не работает. Проверяем
-        // не «пришло ли хоть одно событие», а «есть ли блок, который уже
-        // виден, но так и не показан»: на длинной странице в первый экран
-        // не попадает ни один анимируемый блок, и прежняя проверка
-        // отключала анимацию на всём документе ещё до первой прокрутки.
-        setTimeout(() => {
-          const inView = [...items].some((el) => {
-            const b = el.getBoundingClientRect();
-            return b.top < window.innerHeight && b.bottom > 0;
-          });
-          if (inView && !document.querySelector('.reveal.is-in')) {
-            document.documentElement.classList.remove('js-anim');
-          }
-        }, 3000);
-
-        // И ещё одна проверка после первой прокрутки. К трём секундам
-        // пользователь мог не тронуть страницу, и до блоков дело не дошло;
-        // если наблюдатель сломан, без этой проверки они остались бы
-        // скрытыми навсегда.
-        addEventListener(
-          'scroll',
-          () => {
-            setTimeout(() => {
-              if (!document.querySelector('.reveal.is-in')) {
-                document.documentElement.classList.remove('js-anim');
-              }
-            }, 900);
-          },
-          { once: true, passive: true }
-        );
       }
       initReveal();
       document.addEventListener('astro:page-load', initReveal);

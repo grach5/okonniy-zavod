@@ -30,8 +30,8 @@ writeFileSync(
       lang: 'ru',
       start_url: '/',
       display: 'minimal-ui',
-      background_color: '#0A0A0B',
-      theme_color: '#0A0A0C',
+      background_color: '#F7F5F1',
+      theme_color: '#F7F5F1',
       icons: [
         { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
         { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
